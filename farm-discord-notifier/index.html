@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farm Discord Notifier</title>
+  <style>
+    :root{
+      --bg: #0d1117;
+      --panel: rgba(15, 20, 25, 0.85);
+      --panel-border: rgba(255,255,255,.06);
+      --panel-border-strong: rgba(255,255,255,.10);
+      --muted: #6b7280;
+      --text: #d1d5db;
+      --text-bright: #f3f4f6;
+      --primary: #0ea5e9;
+      --primary-2: #0284c7;
+      --success: #10b981;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --discord: #5865f2;
+      --shadow: 0 10px 24px rgba(0,0,0,.4);
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background: transparent;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+    }
+
+    #tracker{
+      position: fixed;
+      top: 50px; left: 50px;
+      min-width: 380px;
+      max-width: 420px;
+      user-select: none;
+      cursor: move;
+      z-index: 9999;
+
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+
+    #tracker.minimized{
+      min-width: 200px;
+      max-width: 200px;
+    }
+
+    .header{
+      display:flex; align-items:center; gap:.6rem;
+      padding: .9rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      background: rgba(0,0,0,.2);
+    }
+    .header .dot{
+      width:10px; height:10px; border-radius:999px; background: var(--discord);
+      box-shadow: 0 0 0 3px rgba(88,101,242,.08);
+      flex: 0 0 auto;
+    }
+    .header-title{
+      font-weight:700;
+      font-size: 0.95rem;
+      letter-spacing:.2px;
+      color: var(--text-bright);
+    }
+    .header-sub{
+      margin-left:auto;
+      font-size:.75rem; color: var(--muted);
+    }
+
+    .minimize-btn{
+      margin-left: .5rem;
+      width: 20px; height: 20px;
+      border: none;
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .minimize-btn:hover{
+      background: rgba(255,255,255,.12);
+      color: var(--text-bright);
+    }
+
+    .content{
+      padding: .9rem 1rem 1rem;
+    }
+
+    #tracker.minimized .content{
+      display: none;
+    }
+
+    .status{
+      text-align: center;
+      font-weight: 600;
+      font-size: .85rem;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      padding: .5rem .75rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .status.disabled{
+      background: rgba(107,114,128,.1);
+      color: var(--muted);
+    }
+
+    .status.enabled{
+      background: rgba(16,185,129,.1);
+      color: var(--success);
+    }
+
+    .status.error{
+      background: rgba(220,38,38,.1);
+      color: var(--danger);
+    }
+
+    .status.warning{
+      background: rgba(245,158,11,.1);
+      color: var(--warning);
+    }
+
+    .setup-section{
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title{
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: .5rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .form-group{
+      margin-bottom: 1rem;
+    }
+
+    .form-label{
+      display: block;
+      font-size: .75rem;
+      color: var(--muted);
+      margin-bottom: .3rem;
+      font-weight: 500;
+    }
+
+    .form-input{
+      width: 100%;
+      padding: .5rem .75rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: .8rem;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus{
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(14,165,233,.1);
+    }
+
+    .btn{
+      padding: .5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: .8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s ease;
+      margin-right: .5rem;
+      margin-bottom: .5rem;
+    }
+
+    .btn-primary{
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover{
+      background: var(--primary-2);
+    }
+
+    .btn-secondary{
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover{
+      background: rgba(255,255,255,.12);
+    }
+
+    .btn-discord{
+      background: var(--discord);
+      color: white;
+    }
+
+    .btn-discord:hover{
+      background: #4752c4;
+    }
+
+    .btn-danger{
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover{
+      background: #b91c1c;
+    }
+
+    .checkbox-group{
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .75rem;
+    }
+
+    .checkbox{
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    .checkbox-label{
+      font-size: .8rem;
+      color: var(--text);
+    }
+
+    .animal-list{
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: .5rem;
+      background: rgba(0,0,0,.1);
+    }
+
+    .animal-item{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .4rem .5rem;
+      margin-bottom: .3rem;
+      background: rgba(255,255,255,.03);
+      border-radius: 4px;
+      font-size: .75rem;
+    }
+
+    .animal-item:last-child{
+      margin-bottom: 0;
+    }
+
+    .animal-name{
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+
+    .animal-status{
+      font-size: .7rem;
+      padding: .2rem .4rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .animal-status.ready{
+      background: rgba(16,185,129,.1);
+      color: var(--success);
+    }
+
+    .animal-status.soon{
+      background: rgba(245,158,11,.1);
+      color: var(--warning);
+    }
+
+    .animal-status.waiting{
+      background: rgba(107,114,128,.1);
+      color: var(--muted);
+    }
+
+    .info-text{
+      font-size: .7rem;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: .75rem;
+    }
+
+    .discord-status{
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .75rem;
+      margin-bottom: .75rem;
+    }
+
+    .discord-indicator{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .discord-indicator.connected{
+      background: var(--success);
+    }
+
+    .next-notification{
+      font-size: .7rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: .75rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="tracker">
+    <div class="header">
+      <div class="dot"></div>
+      <div class="header-title">Farm Discord Notifier</div>
+      <div class="header-sub">v1.0</div>
+      <button class="minimize-btn" onclick="toggleMinimize()">−</button>
+    </div>
+    
+    <div class="content">
+      <div id="status" class="status disabled">Setup Required</div>
+      
+      <!-- Setup Section -->
+      <div class="setup-section">
+        <div class="section-title">Configuration</div>
+        
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <input type="password" id="api-key" class="form-input" placeholder="Enter your TidalFaction API key">
+          <div class="info-text">Your API key is required to fetch animal data from the server.</div>
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="discord-enabled" class="checkbox">
+          <label for="discord-enabled" class="checkbox-label">Enable Discord Notifications</label>
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="feed-notifications" class="checkbox" checked>
+          <label for="feed-notifications" class="checkbox-label">Notify when animals need feeding</label>
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="collect-notifications" class="checkbox" checked>
+          <label for="collect-notifications" class="checkbox-label">Notify when animals are ready to collect</label>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Check Interval (minutes)</label>
+          <input type="number" id="check-interval" class="form-input" value="5" min="1" max="60">
+        </div>
+        
+        <button id="connect-discord-btn" class="btn btn-discord" onclick="connectDiscord()">Connect Discord</button>
+        <button id="save-settings-btn" class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        <button id="test-notification-btn" class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
+      </div>
+      
+      <!-- Discord Status -->
+      <div class="discord-status">
+        <div id="discord-indicator" class="discord-indicator"></div>
+        <span id="discord-status-text">Discord not connected</span>
+      </div>
+      
+      <!-- Animals Section -->
+      <div class="setup-section">
+        <div class="section-title">Animals Status</div>
+        <div id="animal-list" class="animal-list">
+          <div class="info-text">Enter your API key and save settings to view animals.</div>
+        </div>
+      </div>
+      
+      <div id="next-notification" class="next-notification">
+        Next check: Not scheduled
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

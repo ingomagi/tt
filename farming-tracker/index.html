@@ -1,0 +1,1666 @@
+
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <title>Farming Timer - Transport Tycoon</title>
+    <link rel="shortcut icon" type="image/png" href="https://tidalfaction.com/tidal.png"/>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        :root {
+            --bs-body-bg: transparent !important;
+        }
+
+        [data-bs-theme="dark"] {
+            color-scheme: unset !important;
+        }
+
+        .bg-opacity-80 { --bs-bg-opacity: 0.8 !important; }
+        .bg-opacity-90 { --bs-bg-opacity: 0.9 !important; }
+        .bg-opacity-95 { --bs-bg-opacity: 0.95 !important; }
+
+        .crop-timer-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+
+        .crop-timer-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .crop-timer-card.ready {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .crop-timer-card.warning {
+            border-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .progress-bar-custom {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .progress-fill.ready { background: linear-gradient(90deg, #28a745, #20c997); }
+        .progress-fill.warning { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+        .progress-fill.normal { background: linear-gradient(90deg, #007bff, #6f42c1); }
+
+        .main-container {
+            width: min(600px, 100vw - 20px);
+            height: min(500px, 100vh - 20px);
+            position: fixed;
+            top: 50px;
+            left: 50px;
+            cursor: move;
+            background: rgba(33, 37, 41, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            max-width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
+            min-width: 350px;
+            min-height: 300px;
+            overflow: hidden;
+            transform: none;
+            /* FiveM/NUI: prevent touch/scroll from stealing drags */
+            touch-action: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            background: transparent;
+            z-index: 100;
+        }
+
+        .resize-handle.corner {
+            width: 18px;
+            height: 18px;
+        }
+
+        .resize-handle.edge {
+            background: transparent;
+        }
+
+        .resize-handle.top {
+            top: -3px;
+            left: 10px;
+            right: 10px;
+            height: 6px;
+            cursor: n-resize;
+        }
+
+        .resize-handle.bottom {
+            bottom: -3px;
+            left: 10px;
+            right: 10px;
+            height: 6px;
+            cursor: s-resize;
+        }
+
+        .resize-handle.left {
+            left: -3px;
+            top: 10px;
+            bottom: 10px;
+            width: 6px;
+            cursor: w-resize;
+        }
+
+        .resize-handle.right {
+            right: -3px;
+            top: 10px;
+            bottom: 10px;
+            width: 6px;
+            cursor: e-resize;
+        }
+
+        .resize-handle.top-left {
+            top: -5px;
+            left: -5px;
+            cursor: nw-resize;
+        }
+
+        .resize-handle.top-right {
+            top: -5px;
+            right: -5px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: -5px;
+            left: -5px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -5px;
+            right: -5px;
+            cursor: se-resize;
+            background: linear-gradient(135deg, transparent 0%, transparent 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.2) 60%, transparent 70%, transparent 100%);
+        }
+
+        .resize-handle.bottom-right::before {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background-image: 
+                linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 32%, rgba(255, 255, 255, 0.3) 34%, transparent 36%),
+                linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.3) 42%, rgba(255, 255, 255, 0.3) 44%, transparent 46%),
+                linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.3) 52%, rgba(255, 255, 255, 0.3) 54%, transparent 56%);
+            pointer-events: none;
+        }
+
+        .resize-handle:hover {
+            background: rgba(13, 110, 253, 0.3);
+        }
+
+        .resize-handle.bottom-right:hover::before {
+            background-image: 
+                linear-gradient(45deg, transparent 30%, rgba(13, 110, 253, 0.6) 32%, rgba(13, 110, 253, 0.6) 34%, transparent 36%),
+                linear-gradient(45deg, transparent 40%, rgba(13, 110, 253, 0.6) 42%, rgba(13, 110, 253, 0.6) 44%, transparent 46%),
+                linear-gradient(45deg, transparent 50%, rgba(13, 110, 253, 0.6) 52%, rgba(13, 110, 253, 0.6) 54%, transparent 56%);
+        }
+
+        .main-container.resizing {
+            user-select: none;
+        }
+
+        .main-container.resizing * {
+            pointer-events: none;
+        }
+
+        .main-container.dragging {
+            opacity: 0.9;
+            z-index: 1000;
+        }
+
+        .main-container.dragging * {
+            pointer-events: none;
+        }
+
+        
+.main-container.minimized {
+            height: 35px !important;
+            min-height: 35px !important;
+            max-height: 35px !important;
+            width: 260px !important;
+            min-width: 260px !important;
+            overflow: hidden !important;
+            top: auto !important;
+            bottom: 12px !important;
+            right: 12px !important;
+            left: auto !important;
+            transform: none !important;
+            cursor: default !important;
+        }
+
+
+        .main-container.minimized .resize-handle {
+            display: none !important;
+        }
+
+        .main-container.minimized * {
+            pointer-events: auto;
+        }
+
+        .main-container.minimized .main-panel {
+            padding: 6px 16px;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .main-container.minimized .header-section {
+            margin-bottom: 0 !important;
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+        }
+
+        .main-container.minimized .header-section .d-flex {
+            align-items: center;
+        }
+
+        .main-container.minimized .header-section h5 {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .main-container.minimized .header-section small {
+            display: none !important;
+        }
+
+        .main-container.minimized .controls-section,
+        .main-container.minimized .timers-grid,
+        .main-container.minimized #timers-container,
+        .main-container.minimized .no-timers-section,
+        .main-container.minimized #no-timers {
+            display: none !important;
+        }
+
+        .main-container.minimized #compact-toggle {
+            display: none !important;
+        }
+
+        .main-panel {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 12px;
+        }
+
+        .main-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .main-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .main-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .crop-selector {
+            background: rgba(13, 110, 253, 0.1);
+            border: 1px solid rgba(13, 110, 253, 0.3);
+        }
+
+        .crop-selector:hover {
+            background: rgba(13, 110, 253, 0.2);
+        }
+
+        .crop-selector.selected {
+            background: rgba(13, 110, 253, 0.3);
+            border-color: rgba(13, 110, 253, 0.6);
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .form-select {
+            background-color: #212529 !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: #ffffff !important;
+        }
+
+        .form-select option {
+            background-color: #212529 !important;
+            color: #ffffff !important;
+        }
+
+        .form-select:focus {
+            background-color: #212529 !important;
+            border-color: rgba(13, 110, 253, 0.6) !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+            color: #ffffff !important;
+        }
+
+        select option {
+            background: #212529 !important;
+            color: white !important;
+        }
+
+        select {
+            color: white !important;
+            background: #212529 !important;
+        }
+
+        .compact-mode .timers-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        .compact-mode .crop-timer-card {
+            padding: 0.25rem;
+        }
+
+        .unified-card {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .section-divider {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+        }
+
+        .notification-ready {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(40, 167, 69, 0.95);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            z-index: 2000;
+            display: none;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .confirm-modal.show {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            background: rgba(33, 37, 41, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .confirm-dialog h6 {
+            margin-bottom: 1rem;
+            color: #dc3545;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+
+        .confirm-dialog .btn-group {
+            gap: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header-section {
+            margin-bottom: 15px;
+        }
+
+        .controls-section {
+            margin-bottom: 15px;
+        }
+
+        .timers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 8px;
+        }
+
+        .no-timers-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .unified-header {
+            background: none;
+            border: none;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        .unified-controls {
+            background: none;
+            border: none;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                width: 95vw;
+                height: 80vh;
+                top: 10vh;
+                left: 2.5vw;
+            }
+            
+            .timers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .auto-mode-active #manual-timer-section {
+            display: none;
+        }
+
+        .auto-mode-active #stats-full-width {
+            width: 100%;
+            max-width: 100%;
+            flex: 0 0 100%;
+        }
+
+        .auto-mode-active #stats-full-width .text-end {
+            text-align: center !important;
+        }
+
+        .auto-mode-active #stats-full-width .d-flex {
+            justify-content: center !important;
+        }
+    </style>
+</head>
+
+    <div class="main-container">
+        <div class="resize-handle corner bottom-right"></div>
+        
+        <div class="main-panel">
+            <div class="header-section section-divider">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-1">
+                            <i class="bi bi-seedling text-success me-2"></i>
+                            Farming Timer
+                        </h5>
+                        <small class="text-muted">Track your crop growth</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-light me-1" id="minimize-toggle" title="Minimize/Maximize">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" id="compact-toggle" title="Toggle Compact Mode">
+                            <i class="bi bi-arrows-collapse"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section section-divider">
+                <div class="row">
+                    <div class="col-md-8" id="manual-timer-section">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Add Timer</h6>
+                            <button class="btn btn-sm btn-outline-danger" id="clear-all" title="Clear All Timers">
+                                <i class="bi bi-trash"></i> Clear All
+                            </button>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <select class="form-select form-select-sm" id="crop-selector">
+                                    <option value="">Select a crop...</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-success btn-sm w-100" id="add-timer">
+                                    <i class="bi bi-plus-lg"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4" id="stats-full-width">
+                        <div class="text-end">
+                            <h6 class="mb-2">Quick Stats</h6>
+                            <div class="d-flex justify-content-end gap-3">
+                                <div class="text-center">
+                                    <div class="text-primary fw-bold" id="active-count">0</div>
+                                    <small class="text-muted">Growing</small>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-success fw-bold" id="ready-count">0</div>
+                                    <small class="text-muted">Ready</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div style="background: rgba(13, 110, 253, 0.1); border: 1px solid rgba(13, 110, 253, 0.3); border-radius: 6px; padding: 15px;">
+                            <h6 class="mb-3"><i class="bi bi-robot me-2"></i>Automatic Mode</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label for="api-key" class="form-label small">API Key:</label>
+                                    <input type="password" class="form-control form-control-sm" id="api-key" placeholder="Enter your Transport Tycoon API key" value="">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="refresh-interval" class="form-label small">Auto Refresh:</label>
+                                    <select class="form-select form-select-sm" id="refresh-interval">
+                                        <option value="0">Off</option>
+                                        <option value="1000">1s</option>
+                                        <option value="60000" selected>1m</option>
+                                        <option value="600000">10m</option>
+                                        <option value="3600000">1h</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-outline-primary btn-sm" id="save-api" disabled style="flex: 1;">
+                                            <i class="bi bi-check-circle me-1"></i>Save
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" id="test-timer" title="Test Timer & Check Fields" onclick="manualFieldCheck()">
+                                            <i class="bi bi-gear"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Automatically detect planted crops and create timers. API key is stored locally.
+                            </small>
+                            <div id="api-status" class="mt-2" style="display: none;">
+                                <small class="text-muted">
+                                    <i class="bi bi-circle-fill me-1" id="status-indicator"></i>
+                                    <span id="status-text">Ready</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="timers-container" class="timers-grid">
+            </div>
+
+            <div id="no-timers" class="no-timers-section">
+                <i class="bi bi-clock text-muted mb-3" style="font-size: 2rem;"></i>
+                <h6 class="text-muted mb-3">No Active Timers</h6>
+                <p class="text-muted mb-3">Add a crop timer to get started! Select a crop from the dropdown above and click "Add Timer" when you plant your crops.</p>
+                <div class="row justify-content-center">
+                    <div class="col-md-10">
+                        <div style="background: rgba(13, 110, 253, 0.1); border: 1px solid rgba(13, 110, 253, 0.3); border-radius: 6px; padding: 15px;">
+                            <h6><i class="bi bi-info-circle me-2"></i>How to use:</h6>
+                            <ol class="text-start small mb-0">
+                                <li>Plant crops in your farm fields</li>
+                                <li>Select the crop type from dropdown</li>
+                                <li>Click "Add Timer" to start tracking</li>
+                                <li>Get notified when crops are ready!</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="confirm-modal">
+        <div class="confirm-dialog">
+            <h6><i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Action</h6>
+            <p id="confirm-message">Are you sure you want to proceed?</p>
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary" id="confirm-cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirm-proceed">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const VALID_STATES = new Set(['planting','sowed','growing','cultivating','harvesting','ready']);
+
+        const crops = {
+            "Carrot Seeds": { name: "Carrots", growthTime: 15, level: 1 },
+            "Potato Seeds": { name: "Potatoes", growthTime: 45, level: 5 },
+            "Tomato Seeds": { name: "Tomatoes", growthTime: 60, level: 10 },
+            "Corn Seeds": { name: "Corn", growthTime: 90, level: 15 },
+            "Wheat Seeds": { name: "Wheat", growthTime: 105, level: 20 },
+            "Strawberry Seeds": { name: "Strawberries", growthTime: 120, level: 25 },
+            "Pumpkin Seeds": { name: "Pumpkins", growthTime: 180, level: 30 },
+            "Apple Seeds": { name: "Apples", growthTime: 240, level: 35 },
+            "Orange Seeds": { name: "Oranges", growthTime: 300, level: 40 },
+            "Grape Seeds": { name: "Grapes", growthTime: 360, level: 45 },
+            "Peach Seeds": { name: "Peaches", growthTime: 420, level: 50 },
+            "Cherry Seeds": { name: "Cherries", growthTime: 480, level: 55 },
+            "Pear Seeds": { name: "Pears", growthTime: 540, level: 60 },
+            "Banana Seeds": { name: "Bananas", growthTime: 660, level: 65 },
+            "Mango Seeds": { name: "Mangoes", growthTime: 780, level: 70 },
+            "Pineapple Seeds": { name: "Pineapples", growthTime: 900, level: 75 },
+            "Watermelon Seeds": { name: "Watermelons", growthTime: 960, level: 80 },
+            "Blueberry Seeds": { name: "Blueberries", growthTime: 1080, level: 85 },
+            "Raspberry Seeds": { name: "Raspberries", growthTime: 1200, level: 90 },
+            "Blackberry Seeds": { name: "Blackberries", growthTime: 1440, level: 95 }
+        };
+
+        let activeTimers = [];
+        let compactMode = false;
+        let isMinimized = false;
+        let notificationSounds = true;
+        let apiKey = '';
+        let autoRefreshInterval = 0;
+        let autoRefreshTimer = null;
+        let lastKnownFields = new Map();
+        let isResizing = false;
+        let resizeData = null;
+        let lastNormal = null;
+        let heartbeatTimer = null;
+
+        function init() {
+            populateCropSelector();
+            setupEventListeners();
+            loadSavedTimers();
+            updateDisplay();
+            
+            setInterval(updateTimers, 1000);
+
+            sendCommand({ type: "getData" });
+        }
+
+        function populateCropSelector() {
+            const selector = document.getElementById('crop-selector');
+            Object.keys(crops).forEach(cropType => {
+                const crop = crops[cropType];
+                const option = document.createElement('option');
+                option.value = cropType;
+                option.textContent = `${crop.name} (${formatTime(crop.growthTime * 60 * 1000)}) - Lvl ${crop.level}`;
+                selector.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('add-timer').addEventListener('click', addTimer);
+            document.getElementById('clear-all').addEventListener('click', clearAllTimers);
+            document.getElementById('compact-toggle').addEventListener('click', toggleCompactMode);
+            document.getElementById('minimize-toggle').addEventListener('click', toggleMinimize);
+            
+            document.getElementById('api-key').addEventListener('input', updateApiKey);
+            document.getElementById('refresh-interval').addEventListener('change', updateAutoRefresh);
+            document.getElementById('save-api').addEventListener('click', saveApiSettings);
+
+            const escapeListener = (e) => {
+                if (e.key === "Escape") {
+                    sendCommand({type: "pin"});
+                }
+            };
+            window.addEventListener('keydown', escapeListener);
+
+            setupDragging();
+            setupResizing();
+        }
+
+        function setupDragging() {
+            const container = document.querySelector('.main-container');
+            const dragHandle = document.querySelector('.header-section');
+            let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+            function isBlockedByUI() {
+                return isMinimized || isResizing || container.classList.contains('minimized');
+            }
+
+            function startDrag(e) {
+                if (isBlockedByUI()) return;
+                
+                if (e.target.closest('button') || e.target.closest('.btn')) {
+                    return;
+                }
+                
+                dragging = true;
+                dragHandle.setPointerCapture(e.pointerId);
+                startX = e.clientX; startY = e.clientY;
+                startLeft = container.offsetLeft; startTop = container.offsetTop;
+                container.classList.add('dragging');
+                e.preventDefault();
+                sendCommand({ type: 'requestFocus', focus: true });
+            }
+
+            function moveDrag(e) {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                const rect = container.getBoundingClientRect();
+                const maxLeft = window.innerWidth  - rect.width;
+                const maxTop  = window.innerHeight - rect.height;
+
+                const newLeft = Math.max(0, Math.min(startLeft + dx, maxLeft));
+                const newTop  = Math.max(0, Math.min(startTop  + dy, maxTop));
+
+                container.style.left = newLeft + 'px';
+                container.style.top  = newTop  + 'px';
+            }
+
+            function endDrag(e) {
+                if (!dragging) return;
+                dragging = false;
+                container.classList.remove('dragging');
+                saveSettings();
+                sendCommand({ type: 'requestFocus', focus: false });
+            }
+
+            dragHandle.addEventListener('pointerdown', startDrag);
+            window.addEventListener('pointermove', moveDrag, { passive:false });
+            window.addEventListener('pointerup', endDrag);
+        }
+
+        function setupResizing() {
+            const container = document.querySelector('.main-container');
+            const handle = container.querySelector('.resize-handle.bottom-right');
+            let resizing = false;
+            let startX = 0, startY = 0, startW = 0, startH = 0;
+
+            function startResize(e) {
+                if (isMinimized || container.classList.contains('minimized')) return;
+                e.stopPropagation();
+                e.preventDefault();
+                isResizing = true;
+                resizing = true;
+                container.classList.add('resizing');
+                handle.setPointerCapture(e.pointerId);
+                const r = container.getBoundingClientRect();
+                startX = e.clientX; startY = e.clientY;
+                startW = r.width;   startH = r.height;
+                sendCommand({ type: 'requestFocus', focus: true });
+            }
+
+            function moveResize(e) {
+                if (!resizing) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                const minW = 350, minH = 300;
+                const maxW = window.innerWidth  - container.offsetLeft - 20;
+                const maxH = window.innerHeight - container.offsetTop  - 20;
+
+                const newW = Math.max(minW, Math.min(startW + dx, maxW));
+                const newH = Math.max(minH, Math.min(startH + dy, maxH));
+
+                container.style.width  = newW + 'px';
+                container.style.height = newH + 'px';
+            }
+
+            function endResize(e) {
+                if (!resizing) return;
+                resizing = false;
+                isResizing = false;
+                container.classList.remove('resizing');
+                saveSettings();
+                sendCommand({ type: 'requestFocus', focus: false });
+            }
+
+            handle.addEventListener('pointerdown', startResize);
+            window.addEventListener('pointermove', moveResize, { passive:false });
+            window.addEventListener('pointerup', endResize);
+        }
+
+        function getResizeDirection(className) {
+            if (className.includes('top-left')) return ['top', 'left'];
+            if (className.includes('top-right')) return ['top', 'right'];
+            if (className.includes('bottom-left')) return ['bottom', 'left'];
+            if (className.includes('bottom-right')) return ['bottom', 'right'];
+            if (className.includes('top')) return ['top'];
+            if (className.includes('bottom')) return ['bottom'];
+            if (className.includes('left')) return ['left'];
+            if (className.includes('right')) return ['right'];
+            return [];
+        }
+
+        function addTimer() {
+            const selector = document.getElementById('crop-selector');
+            const cropType = selector.value;
+            
+            if (!cropType) return;
+
+            const crop = crops[cropType];
+            const timer = {
+                id: Date.now(),
+                cropType: cropType,
+                cropName: crop.name,
+                startTime: Date.now(),
+                duration: crop.growthTime * 60 * 1000,
+                notified: false
+            };
+
+            activeTimers.push(timer);
+            saveTimers();
+            updateDisplay();
+            selector.value = '';
+
+            sendCommand({
+                type: "notification",
+                text: `~g~[Farming Timer]~s~ Started ${crop.name} timer (${formatTime(timer.duration)})`
+            });
+        }
+
+        function removeTimer(id) {
+            activeTimers = activeTimers.filter(timer => timer.id !== id);
+            saveTimers();
+            updateDisplay();
+        }
+
+        function clearAllTimers() {
+            if (activeTimers.length === 0) {
+                sendCommand({
+                    type: "notification",
+                    text: "~y~[Farming Timer]~s~ No timers to clear"
+                });
+                return;
+            }
+
+            showConfirmModal(
+                `Clear all ${activeTimers.length} timer${activeTimers.length === 1 ? '' : 's'}?`,
+                () => {
+                    activeTimers = [];
+                    saveTimers();
+                    updateDisplay();
+                    sendCommand({
+                        type: "notification",
+                        text: "~g~[Farming Timer]~s~ All farming timers cleared"
+                    });
+                }
+            );
+        }
+
+        function updateTimers() {
+            const now = Date.now();
+            let hasReadyTimers = false;
+
+            activeTimers.forEach(timer => {
+                const elapsed = now - timer.startTime;
+                const remaining = timer.duration - elapsed;
+
+                if (remaining <= 0 && !timer.notified) {
+                    timer.notified = true;
+                    hasReadyTimers = true;
+                    
+                    sendCommand({
+                        type: "popup",
+                        title: "Crops Ready",
+                        text: `Your ${timer.cropName} are ready to harvest!`
+                    });
+                    
+                    sendCommand({
+                        type: "notification",
+                        text: `~g~[Farming Timer]~s~ ${timer.cropName} ready to harvest!`
+                    });
+
+                    sendCommand({
+                        type: "sfx",
+                        sfx: 6
+                    });
+                }
+            });
+
+            updateDisplay();
+            saveTimers();
+        }
+
+        function updateDisplay() {
+            const container = document.getElementById('timers-container');
+            const noTimers = document.getElementById('no-timers');
+            
+            container.innerHTML = '';
+            
+            if (activeTimers.length === 0) {
+                noTimers.style.display = 'block';
+                updateStats(0, 0);
+                return;
+            }
+            
+            noTimers.style.display = 'none';
+            
+            const sortedTimers = [...activeTimers].sort((a, b) => {
+                const nowA = Date.now() - a.startTime;
+                const nowB = Date.now() - b.startTime;
+                const remainingA = a.duration - nowA;
+                const remainingB = b.duration - nowB;
+                return remainingA - remainingB;
+            });
+
+            let activeCount = 0;
+            let readyCount = 0;
+
+            sortedTimers.forEach(timer => {
+                const now = Date.now();
+                const elapsed = now - timer.startTime;
+                const remaining = timer.duration - elapsed;
+                
+                if (remaining <= 0) {
+                    readyCount++;
+                } else {
+                    activeCount++;
+                }
+
+                const timerElement = createTimerElement(timer);
+                container.appendChild(timerElement);
+            });
+
+            updateStats(activeCount, readyCount);
+        }
+
+        function updateStats(active, ready) {
+            document.getElementById('active-count').textContent = active;
+            document.getElementById('ready-count').textContent = ready;
+        }
+
+        function createTimerElement(timer) {
+            const now = Date.now();
+            const elapsed = now - timer.startTime;
+            const remaining = timer.duration - elapsed;
+            const progress = Math.min(elapsed / timer.duration * 100, 100);
+            
+            const isReady = remaining <= 0;
+            const isWarning = remaining > 0 && remaining <= 5 * 60 * 1000;
+
+            const div = document.createElement('div');
+            div.className = `crop-timer-card p-2 ${isReady ? 'ready' : isWarning ? 'warning' : ''}`;
+            
+            const timeDisplay = isReady ? 'READY!' : formatTime(remaining);
+            const statusIcon = isReady ? '<i class="bi bi-check-circle-fill text-success"></i>' : 
+                               isWarning ? '<i class="bi bi-clock-fill text-warning"></i>' : 
+                               '<i class="bi bi-clock text-primary"></i>';
+
+            const autoCreatedBadge = timer.autoCreated ? '<span class="badge bg-primary me-1" style="font-size: 0.6rem;">AUTO</span>' : '';
+            const fertilizedBadge = timer.isFertilized ? '<span class="badge bg-warning me-1" style="font-size: 0.6rem;">FERT</span>' : '';
+
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 small">${statusIcon} ${autoCreatedBadge}${fertilizedBadge}${timer.cropName}</h6>
+                        ${!compactMode ? `<small class="text-muted" style="font-size: 0.75rem;">${timer.cropType}${timer.fieldId ? ` (Field: ${timer.fieldId})` : ''}</small>` : ''}
+                    </div>
+                    <div class="text-end ms-2">
+                        <div class="timer-display small fw-bold ${isReady ? 'text-success' : isWarning ? 'text-warning' : 'text-primary'}">${timeDisplay}</div>
+                        <button class="btn btn-sm btn-outline-danger p-1" onclick="removeTimer(${timer.id})" title="Remove Timer" style="font-size: 0.7rem; line-height: 1;">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+                ${!compactMode ? `
+                <div class="progress-bar-custom mb-2">
+                    <div class="progress-fill ${isReady ? 'ready' : isWarning ? 'warning' : 'normal'}" style="width: ${progress}%"></div>
+                </div>
+                ` : ''}
+                ${!compactMode && !isReady ? `
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted" style="font-size: 0.7rem;">Started: ${new Date(timer.startTime).toLocaleTimeString()}</small>
+                    <small class="text-muted" style="font-size: 0.7rem;">${Math.floor(progress)}%</small>
+                </div>
+                ` : ''}
+                ${isReady ? `
+                <div class="text-center">
+                    <small class="text-success" style="font-size: 0.7rem;"><i class="bi bi-check-circle me-1"></i>Ready to harvest!</small>
+                </div>
+                ` : ''}
+            `;
+            
+            return div;
+        }
+
+        function formatTime(milliseconds) {
+            if (milliseconds <= 0) return 'READY!';
+            
+            const totalSeconds = Math.ceil(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${seconds}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${seconds}s`;
+            } else {
+                return `${seconds}s`;
+            }
+        }
+
+        function toggleCompactMode() {
+            compactMode = !compactMode;
+            document.body.classList.toggle('compact-mode', compactMode);
+            document.getElementById('compact-toggle').innerHTML = compactMode ? 
+                '<i class="bi bi-arrows-expand"></i>' : '<i class="bi bi-arrows-collapse"></i>';
+            updateDisplay();
+            saveSettings();
+        }
+
+        function updateApiKey() {
+            const apiKeyInput = document.getElementById('api-key');
+            const saveBtn = document.getElementById('save-api');
+            
+            apiKey = apiKeyInput.value.trim();
+            saveBtn.disabled = !apiKey;
+            
+            if (!apiKey) {
+                toggleAutomaticMode(false);
+                if (autoRefreshTimer) {
+                    clearInterval(autoRefreshTimer);
+                    autoRefreshTimer = null;
+                    updateApiStatus('stopped', 'Auto-refresh stopped');
+                }
+            } else {
+                if (autoRefreshInterval > 0) {
+                    updateAutoRefresh();
+                }
+            }
+        }
+
+        function toggleAutomaticMode(enabled) {
+            const container = document.querySelector('.main-container');
+            if (enabled) {
+                container.classList.add('auto-mode-active');
+            } else {
+                container.classList.remove('auto-mode-active');
+            }
+        }
+
+        function updateAutoRefresh() {
+            const intervalSelect = document.getElementById('refresh-interval');
+            autoRefreshInterval = parseInt(intervalSelect.value);
+            
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+                console.log('Cleared existing auto-refresh timer');
+            }
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+            
+            if (autoRefreshInterval > 0 && apiKey) {
+                console.log(`Starting auto-refresh timer with interval: ${autoRefreshInterval}ms`);
+                autoRefreshTimer = setInterval(checkFarmingFields, autoRefreshInterval);
+                
+                heartbeatTimer = setInterval(() => {
+                    console.log('Timer heartbeat - Auto-refresh is still active');
+                }, Math.min(autoRefreshInterval, 30000));
+                
+                updateApiStatus('active', `Auto-refresh every ${getIntervalText(autoRefreshInterval)}`);
+                console.log('Timer started, running initial check...');
+                checkFarmingFields();
+            } else if (autoRefreshInterval > 0 && !apiKey) {
+                updateApiStatus('stopped', 'Auto-refresh disabled - API key required');
+            } else {
+                updateApiStatus('stopped', 'Auto-refresh disabled');
+            }
+            
+            saveSettings();
+        }
+
+        function getIntervalText(interval) {
+            if (interval >= 3600000) return `${interval / 3600000}h`;
+            if (interval >= 60000) return `${interval / 60000}m`;
+            return `${interval / 1000}s`;
+        }
+
+        function checkTimerStatus() {
+            console.log('=== Timer Status Check ===');
+            console.log('API Key:', apiKey ? 'Set' : 'Not Set');
+            console.log('Auto Refresh Interval:', autoRefreshInterval);
+            console.log('Auto Refresh Timer:', autoRefreshTimer ? 'Active' : 'Inactive');
+            console.log('Heartbeat Timer:', heartbeatTimer ? 'Active' : 'Inactive');
+            console.log('Active Timers:', activeTimers.length);
+            console.log('Last Known Fields:', lastKnownFields.size);
+            console.log('===========================');
+            
+            if (autoRefreshInterval > 0 && apiKey && !autoRefreshTimer) {
+                console.log('Timer should be running but isn\'t - restarting...');
+                updateAutoRefresh();
+            }
+        }
+
+        async function manualFieldCheck() {
+            console.log('=== Manual Field Check ===');
+            checkTimerStatus();
+            
+            if (!apiKey) {
+                console.log('❌ Cannot check fields: No API key set');
+                updateApiStatus('error', 'No API key for manual check');
+                return;
+            }
+            
+            console.log('🔄 Running manual field check...');
+            updateApiStatus('testing', 'Manual field check in progress...');
+            
+            try {
+                await checkFarmingFields();
+                console.log('✅ Manual field check completed');
+            } catch (error) {
+                console.error('❌ Manual field check failed:', error);
+                updateApiStatus('error', `Manual check failed: ${error.message}`);
+            }
+        }
+
+        async function saveApiSettings() {
+            if (!apiKey) return;
+            
+            updateApiStatus('testing', 'Testing API connection...');
+            
+            try {
+                const response = await fetch('https://tycoon-njyvop.users.cfx.re/status/farming/fields.json', {
+                    headers: {
+                        'X-Tycoon-Key': apiKey
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const fieldsCount = data.fields ? data.fields.length : 0;
+                    const ownedFields = data.fields ? data.fields.filter(f => f.isOwned).length : 0;
+                    
+                    saveSettings();
+                    
+                    toggleAutomaticMode(true);
+                    
+                    if (autoRefreshInterval > 0) {
+                        updateAutoRefresh();
+                    }
+                    
+                    updateApiStatus('success', `API saved! Found ${fieldsCount} total fields (${ownedFields} owned)`);
+                    
+                    sendCommand({
+                        type: "notification",
+                        text: `~g~[Farming Timer]~s~ Automatic mode enabled! Found ${ownedFields} owned fields`
+                    });
+
+                    processFieldsData(data);
+                    
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                updateApiStatus('error', `API connection failed: ${error.message}`);
+                sendCommand({
+                    type: "notification",
+                    text: `~r~[Farming Timer]~s~ API connection failed: ${error.message}`
+                });
+            }
+        }
+
+        async function testApiConnection() {
+            if (!apiKey) return;
+            
+            updateApiStatus('testing', 'Testing API connection...');
+            
+            try {
+                const response = await fetch('https://tycoon-njyvop.users.cfx.re/status/farming/fields.json', {
+                    headers: {
+                        'X-Tycoon-Key': apiKey
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const fieldsCount = data.fields ? data.fields.length : 0;
+                    const ownedFields = data.fields ? data.fields.filter(f => f.isOwned).length : 0;
+                    updateApiStatus('success', `API connected! Found ${fieldsCount} total fields (${ownedFields} owned)`);
+                    
+                    sendCommand({
+                        type: "notification",
+                        text: `~g~[Farming Timer]~s~ API connection successful! Found ${ownedFields} owned fields`
+                    });
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                updateApiStatus('error', `API connection failed: ${error.message}`);
+                sendCommand({
+                    type: "notification",
+                    text: `~r~[Farming Timer]~s~ API connection failed: ${error.message}`
+                });
+            }
+        }
+
+        async function checkFarmingFields() {
+            if (!apiKey) {
+                console.log('Auto-refresh skipped: No API key');
+                return;
+            }
+            
+            console.log('Auto-refresh triggered at:', new Date().toLocaleTimeString());
+            console.log('Timer still active:', !!autoRefreshTimer);
+            
+            try {
+                const response = await fetch('https://tycoon-njyvop.users.cfx.re/status/farming/fields.json', {
+                    headers: {
+                        'X-Tycoon-Key': apiKey
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const fieldsData = await response.json();
+                processFieldsData(fieldsData);
+                
+            } catch (error) {
+                console.error('Failed to fetch farming data:', error);
+                updateApiStatus('error', `Fetch failed: ${error.message}`);
+                
+                console.log('API error occurred, but timer should continue');
+            }
+        }
+
+        function processFieldsData(fieldsData) {
+            let newFields = 0;
+            const nowMs = Date.now();
+
+            const fields = fieldsData.fields || [];
+            console.log(`Processing ${fields.length} fields from API...`);
+
+            for (const fieldInfo of fields) {
+                if (!fieldInfo || !fieldInfo.isOwned) { continue; }
+
+                if (!fieldInfo.name) { continue; }
+                if (!fieldInfo.crop_name) { 
+                    continue; 
+                }
+
+                if (!VALID_STATES.has(String(fieldInfo.state || '').toLowerCase())) {
+                    console.log(`  ❌ Field ${fieldInfo.name} skipped: State is "${fieldInfo.state}" (not in valid states)`);
+                    continue;
+                }
+
+                const plantedSec = Number(fieldInfo.time_planted || 0);
+                if (!plantedSec) {
+                    console.log(`  ❌ Field ${fieldInfo.name} skipped: No time planted`);
+                    continue;
+                }
+
+                const plantedMs = plantedSec * 1000;
+
+                let durationMs = 0;
+                let harvestTimeMs = 0;
+                const growthSec = Number(fieldInfo.growth_time || 0);
+                const harvestSec = Number(fieldInfo.harvest_time || 0);
+
+                if (harvestSec > 0) {
+                    harvestTimeMs = harvestSec * 1000;
+                    durationMs = Math.max(0, harvestTimeMs - plantedMs);
+                } else if (growthSec > 0) {
+                    durationMs = growthSec * 1000;
+                    harvestTimeMs = plantedMs + durationMs;
+                } else {
+                    const cropData = findCropByCropName(fieldInfo.crop_name);
+                    if (cropData && cropData.growthTime) {
+                        durationMs = cropData.growthTime * 60 * 1000;
+                        harvestTimeMs = plantedMs + durationMs;
+                    } else {
+                        console.log(`Skipping ${fieldInfo.name}: no duration (crop: ${fieldInfo.crop_name})`);
+                        continue;
+                    }
+                }
+
+                const timeSinceHarvest = nowMs - harvestTimeMs;
+                if (timeSinceHarvest > 24 * 60 * 60 * 1000) {
+                    console.log(`  ❌ Field ${fieldInfo.name} skipped: Crop is ${Math.floor(timeSinceHarvest / (60 * 60 * 1000))}h past harvest time`);
+                    continue;
+                }
+
+                const fieldKey = `${fieldInfo.name}-${plantedSec}`;
+                if (lastKnownFields.has(fieldKey)) { continue; }
+
+                const existingTimerIndex = activeTimers.findIndex(t =>
+                    t.fieldId === fieldInfo.name &&
+                    t.cropName === fieldInfo.crop_name &&
+                    Math.abs(t.startTime - plantedMs) < 5000
+                );
+                
+                if (existingTimerIndex !== -1) {
+                    const existingTimer = activeTimers[existingTimerIndex];
+                    const oldDuration = existingTimer.duration;
+                    const oldFertilized = existingTimer.isFertilized;
+                    
+                    existingTimer.duration = durationMs;
+                    existingTimer.isFertilized = !!fieldInfo.isFertilized;
+                    
+                    if (!oldFertilized && existingTimer.isFertilized) {
+                        const timeSaved = oldDuration - durationMs;
+                        const timeSavedText = timeSaved > 0 ? ` (saves ${formatTime(timeSaved)})` : '';
+                        sendCommand({
+                            type: "notification",
+                            text: `~g~[Farming Timer]~s~ ${fieldInfo.crop_name} fertilized in ${fieldInfo.name}${timeSavedText}`
+                        });
+                        console.log(`  🧪 Field ${fieldInfo.name} fertilized: Updated timer duration from ${formatTime(oldDuration)} to ${formatTime(durationMs)}`);
+                    }
+                    
+                    continue;
+                }
+
+                console.log(`  ✅ Field ${fieldInfo.name} processed: Adding timer for ${fieldInfo.crop_name}`);
+
+                const timer = {
+                    id: Date.now() + Math.random(),
+                    cropType: `${fieldInfo.crop_name} Seeds`,
+                    cropName: fieldInfo.crop_name,
+                    startTime: plantedMs,
+                    duration: durationMs,
+                    notified: false,
+                    fieldId: fieldInfo.name,
+                    autoCreated: true,
+                    isFertilized: !!fieldInfo.isFertilized
+                };
+
+                activeTimers.push(timer);
+                lastKnownFields.set(fieldKey, nowMs);
+                newFields++;
+            }
+
+            for (const [k, ts] of lastKnownFields.entries()) {
+                if (nowMs - ts > 24 * 60 * 60 * 1000) lastKnownFields.delete(k);
+            }
+
+            if (newFields > 0) {
+                saveTimers();
+                updateDisplay();
+                sendCommand({ type: "notification", text: `~g~[Farming Timer]~s~ Auto-detected ${newFields} crop${newFields===1?'':'s'}!` });
+                updateApiStatus('success', `Last check: ${new Date().toLocaleTimeString()} (${newFields} new)`);
+            } else {
+                updateApiStatus('success', `Last check: ${new Date().toLocaleTimeString()}`);
+            }
+        }
+
+        function findCropByCropName(cropName) {
+            if (!cropName) return null;
+            const target = String(cropName).toLowerCase().trim()
+                .replace(/s$/, '')
+                .replace(/\s+/g, ' ');
+
+            return cropTypes.find(crop => {
+                const base = crop.name.toLowerCase().replace(' seeds', '').replace(/s$/, '').replace(/\s+/g, ' ');
+                return base === target;
+            }) || null;
+        }
+
+        function findCropBySeedName(seedName) {
+            if (crops[seedName]) {
+                return crops[seedName];
+            }
+            
+            const cropName = seedName.replace(' Seeds', '');
+            for (const [key, crop] of Object.entries(crops)) {
+                if (crop.name.toLowerCase().includes(cropName.toLowerCase()) || 
+                    key.toLowerCase().includes(cropName.toLowerCase())) {
+                    return crop;
+                }
+            }
+            
+            return null;
+        }
+
+        function updateApiStatus(type, message) {
+            const statusDiv = document.getElementById('api-status');
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            
+            statusDiv.style.display = 'block';
+            text.textContent = message;
+            
+            console.log(`API Status: ${type} - ${message}`);
+            if (type === 'active') {
+                console.log(`Timer ID: ${autoRefreshTimer ? 'Set' : 'Not Set'}, Interval: ${autoRefreshInterval}ms`);
+            }
+            
+            indicator.className = 'bi bi-circle-fill me-1';
+            
+            switch (type) {
+                case 'testing':
+                    indicator.classList.add('text-warning');
+                    break;
+                case 'success':
+                    indicator.classList.add('text-success');
+                    break;
+                case 'active':
+                    indicator.classList.add('text-primary');
+                    break;
+                case 'error':
+                    indicator.classList.add('text-danger');
+                    break;
+                case 'stopped':
+                    indicator.classList.add('text-muted');
+                    break;
+            }
+        }
+
+        function toggleMinimize() {
+            isMinimized = !isMinimized;
+            const container = document.querySelector('.main-container');
+            
+            if (isMinimized) {
+                const containerStyle = window.getComputedStyle(container);
+                lastNormal = {
+                    left: container.offsetLeft + 'px',
+                    top: container.offsetTop + 'px',
+                    width: containerStyle.width,
+                    height: containerStyle.height
+                };
+                container.classList.add('minimized');
+            } else {
+                container.classList.remove('minimized');
+                if (lastNormal) {
+                    container.style.left = lastNormal.left;
+                    container.style.top = lastNormal.top;
+                    container.style.width = lastNormal.width;
+                    container.style.height = lastNormal.height;
+                }
+            }
+            
+            const minimizeBtn = document.getElementById('minimize-toggle');
+            minimizeBtn.innerHTML = isMinimized ? 
+                '<i class="bi bi-plus-lg"></i>' : '<i class="bi bi-dash-lg"></i>';
+            minimizeBtn.title = isMinimized ? 'Maximize' : 'Minimize';
+            
+            saveSettings();
+        }
+
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            const messageEl = document.getElementById('confirm-message');
+            const cancelBtn = document.getElementById('confirm-cancel');
+            const proceedBtn = document.getElementById('confirm-proceed');
+
+            messageEl.textContent = message;
+            modal.classList.add('show');
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            const newProceedBtn = proceedBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+            proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
+
+            newCancelBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+            });
+
+            newProceedBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+                onConfirm();
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    modal.classList.remove('show');
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        function sendCommand(command) {
+            window.parent.postMessage(command, "*");
+        }
+
+        function saveTimers() {
+            localStorage.setItem('farmingTimers', JSON.stringify(activeTimers));
+        }
+
+        function loadSavedTimers() {
+            const saved = localStorage.getItem('farmingTimers');
+            if (saved) {
+                activeTimers = JSON.parse(saved);
+                const now = Date.now();
+                activeTimers = activeTimers.filter(timer => {
+                    const remaining = timer.duration - (now - timer.startTime);
+                    return remaining > -24 * 60 * 60 * 1000;
+                });
+            }
+        }
+
+        function saveSettings() {
+            const container = document.querySelector('.main-container');
+            const rect = container.getBoundingClientRect();
+            
+            const docked = container.classList.contains('minimized');
+            localStorage.setItem('farmingSettings', JSON.stringify({
+                compactMode: compactMode,
+                isMinimized: isMinimized,
+                apiKey: apiKey,
+                autoRefreshInterval: autoRefreshInterval,
+                windowWidth: docked ? (lastNormal?.width ? parseInt(lastNormal.width) : rect.width) : rect.width,
+                windowHeight: docked ? (lastNormal?.height ? parseInt(lastNormal.height) : rect.height) : rect.height,
+                windowLeft: docked && lastNormal ? parseInt(lastNormal.left) : container.offsetLeft,
+                windowTop: docked ? (lastNormal?.top ? parseInt(lastNormal.top) : container.offsetTop) : container.offsetTop
+            }));
+        }
+
+        function loadSettings() {
+            const container = document.querySelector('.main-container');
+            const settingsRaw = localStorage.getItem('farmingSettings');
+            if (!settingsRaw) return;
+            let settings;
+            try {
+                settings = JSON.parse(settingsRaw);
+            } catch (e) {
+                return;
+            }
+            compactMode = settings.compactMode || false;
+            isMinimized = settings.isMinimized || false;
+            apiKey = settings.apiKey || '';
+            autoRefreshInterval = settings.autoRefreshInterval || 0;
+
+            const r0 = container.getBoundingClientRect();
+            const maxWidth = Math.min((settings.windowWidth || r0.width), window.innerWidth - 20);
+            const maxHeight = Math.min((settings.windowHeight || r0.height), window.innerHeight - 20);
+            const safeLeft = Math.max(0, Math.min((settings.windowLeft ?? r0.left), window.innerWidth - maxWidth));
+            const safeTop  = Math.max(0, Math.min((settings.windowTop  ?? r0.top),  window.innerHeight - maxHeight));
+
+            container.style.width = maxWidth + 'px';
+            container.style.height = maxHeight + 'px';
+            container.style.left = safeLeft + 'px';
+            container.style.top = safeTop + 'px';
+            document.body.classList.toggle('compact-mode', compactMode);
+            document.getElementById('compact-toggle').innerHTML = compactMode ? 
+                '<i class="bi bi-arrows-expand"></i>' : '<i class="bi bi-arrows-collapse"></i>';
+            
+            if (apiKey) {
+                document.getElementById('api-key').value = apiKey;
+                document.getElementById('save-api').disabled = false;
+                toggleAutomaticMode(true);
+            }
+            
+            if (autoRefreshInterval > 0) {
+                document.getElementById('refresh-interval').value = autoRefreshInterval.toString();
+            }
+            
+            if (isMinimized) {
+                lastNormal = {
+                    left: safeLeft + 'px',
+                    top: safeTop + 'px',
+                    width: maxWidth + 'px',
+                    height: maxHeight + 'px'
+                };
+                container.classList.add('minimized');
+                document.getElementById('minimize-toggle').innerHTML = '<i class="bi bi-plus-lg"></i>';
+                document.getElementById('minimize-toggle').title = 'Maximize';
+            }
+            
+            if (apiKey && autoRefreshInterval > 0) {
+                console.log('Starting auto-refresh from loaded settings:', autoRefreshInterval + 'ms');
+                setTimeout(() => {
+                    updateAutoRefresh();
+                }, 1000);
+            } else if (autoRefreshInterval > 0) {
+                console.log('Auto-refresh interval set but no API key');
+                updateApiStatus('stopped', 'Auto-refresh disabled - API key required');
+            }
+        }
+
+        window.addEventListener("message", (event) => {
+            const data = event.data;
+            if (data && data.data) {
+            }
+        });
+
+        function initializeFiveMSupport() {
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            document.addEventListener('selectstart', (e) => {
+                if (isResizing || document.querySelector('.main-container.dragging')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            document.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        window.addEventListener('load', () => {
+            initializeFiveMSupport();
+            loadSettings();
+            init();
+        });
+
+        window.removeTimer = removeTimer;
+        window.checkTimerStatus = checkTimerStatus;
+        window.manualFieldCheck = manualFieldCheck;
+    </script>
+</body>
+</html>

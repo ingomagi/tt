@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EXP Boost Redeemer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="exp-redeemer">
+    <div id="exp-header">
+      <span class="exp-title">🎁 EXP Boosts</span>
+      <div class="exp-header-actions">
+        <span id="close" title="Close">✖</span>
+      </div>
+    </div>
+    <div id="exp-content">
+      <button id="open-ui" class="primary" style="display:none;">Redeem EXP Boosts</button>
+      <div id="popup" class="hidden">
+        <form id="exp-form"></form>
+        <div class="popup-actions">
+          <button id="redeem-btn" class="primary">Redeem Selected</button>
+          <button id="cancel-btn" type="button" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="exp-toggle-btn" class="hidden" title="Open EXP Boost UI">
+    <svg width="24" height="24" viewBox="0 0 24 24" style="display:block">
+      <line x1="12" y1="6" x2="12" y2="18" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      <line x1="6" y1="12" x2="18" y2="12" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

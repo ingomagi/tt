@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mining Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="dashboard-container" id="draggableWindow">
+    <div class="dashboard-header">
+      <div class="header-content">
+        <div class="header-title">
+          <i class="fas fa-pickaxe"></i>
+          <span>Mining Dashboard</span>
+        </div>
+        <div class="header-actions">
+          <button class="btn-layout" id="layoutBtn" title="Toggle Layout">
+            <i class="fas fa-arrows-alt-h"></i>
+          </button>
+          <button class="btn-minimize" id="minimizeBtn">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <div class="left-column">
+        <div class="inventory-overview">
+          <div class="inventory-card">
+            <div class="inventory-header">
+              <i class="fas fa-backpack"></i>
+              <span>Inventory</span>
+            </div>
+            <div class="inventory-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" id="inventoryProgress"></div>
+              </div>
+              <div class="inventory-details">
+                <span class="inventory-text" id="inv-percent">--%</span>
+                <span class="inventory-capacity">
+                  <span id="inv-current">--</span> / <span id="inv-max">--</span> kg
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bxp-section">
+          <div class="bxp-card">
+            <div class="bxp-simple">
+              <div class="bxp-value" id="total-bxp">0</div>
+              <div class="bxp-label">Total BXP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ore-grid">
+        <div class="ore-card copper-card">
+          <div class="ore-header">
+            <div class="ore-icon">
+              <i class="fas fa-cube"></i>
+            </div>
+            <div class="ore-title">
+              <h3>Copper Ore</h3>
+              <span class="ore-subtitle">Mining Progress</span>
+            </div>
+          </div>
+          
+          <div class="ore-stats">
+            <div class="stat-item main-stat">
+              <div class="stat-value" id="copper-total">0</div>
+              <div class="stat-label">Total Ore</div>
+            </div>
+            
+            <div class="stat-row">
+              <div class="stat-item">
+                <div class="stat-value" id="copper-vouchers">0</div>
+                <div class="stat-label">Vouchers</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="copper-hr">0</div>
+                <div class="stat-label">Per Hour</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="copper-min">0</div>
+                <div class="stat-label">Per Min</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ore-card iron-card">
+          <div class="ore-header">
+            <div class="ore-icon">
+              <i class="fas fa-cube"></i>
+            </div>
+            <div class="ore-title">
+              <h3>Iron Ore</h3>
+              <span class="ore-subtitle">Mining Progress</span>
+            </div>
+          </div>
+          
+          <div class="ore-stats">
+            <div class="stat-item main-stat">
+              <div class="stat-value" id="iron-total">0</div>
+              <div class="stat-label">Total Ore</div>
+            </div>
+            
+            <div class="stat-row">
+              <div class="stat-item">
+                <div class="stat-value" id="iron-vouchers">0</div>
+                <div class="stat-label">Vouchers</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="iron-hr">0</div>
+                <div class="stat-label">Per Hour</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="iron-min">0</div>
+                <div class="stat-label">Per Min</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="performance-section">
+        <div class="section-header">
+          <i class="fas fa-chart-line"></i>
+          <span>Performance Metrics</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="session-time">00:00:00</div>
+              <div class="metric-label">Session Time</div>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-fire"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="total-mined">0</div>
+              <div class="metric-label">Total Mined</div>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon">
+              <i class="fas fa-coins"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-value" id="total-vouchers">0</div>
+              <div class="metric-label">Total Vouchers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="mining-tracker.js"></script>
+</body>
+</html>

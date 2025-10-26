@@ -1,0 +1,262 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #fff;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+#tracker-app.new-ui {
+  background: rgba(23, 25, 29, 0.93);
+  box-shadow: none !important;
+  border-radius: 10px;
+  padding: 0.4em 0.5em 0.4em 0.5em;
+  position: absolute;
+  font-size: 13px;
+  min-width: 300px;
+  min-height: 0;
+  resize: none;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
+#tracker-app::-webkit-scrollbar {
+  width: 10px;
+  background: #23262a;
+}
+#tracker-app::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 6px;
+  border: 2px solid #23262a;
+}
+#tracker-app::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+#tracker-app {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #23262a;
+}
+
+#tracker-app header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+  user-select: none;
+  background: rgba(30,32,36,0.7);
+  border-radius: 7px;
+  padding: 0.2em 0.7em 0.2em 0.5em;
+  margin: -0.4em -0.5em 0.5em -0.5em;
+  font-size: 1em;
+}
+
+.drag-title {
+  font-size: 1em;
+  color: #00ffaa;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+#settings-icon {
+  font-size: 1.1em;
+  background: rgba(50, 50, 50, 0.7);
+  padding: 0.18em 0.33em;
+  border-radius: 7px;
+  cursor: pointer;
+  color: white;
+  transition: background 0.2s;
+  margin-left: 12px;
+  pointer-events: auto;
+}
+
+#settings-icon:hover {
+  background: #444;
+}
+
+#job-select-section {
+  margin-bottom: 0.2em;
+}
+
+#job-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  margin-top: 0.1em;
+  margin-bottom: 0.2em;
+  max-width: 400px;
+}
+
+.job-checkbox-label {
+  background: #222;
+  border-radius: 5px;
+  padding: 0.18em 0.48em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 0.93em;
+  border: 1px solid #333;
+  transition: background 0.2s, border 0.2s;
+}
+
+.job-checkbox-label input[type="checkbox"] {
+  margin-right: 0.3em;
+}
+
+.job-checkbox-label.selected {
+  background: #00ffaa33;
+  border: 1px solid #00ffaa;
+}
+
+#bxp-summary-section {
+  margin: 0;
+  padding: 0;
+}
+
+#bxp-summary-table tbody,
+#bxp-summary-table tbody tr,
+#bxp-summary-table tbody td {
+  font-size: var(--bxp-row-font-size, 13px) !important;
+}
+
+#bxp-summary-section table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+  background: rgba(23, 25, 29, 0.93);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+#bxp-summary-section th,
+#bxp-summary-section td {
+  padding: 0.15em 0.12em;
+  text-align: center;
+}
+
+#bxp-summary-section th {
+  background: #24282c;
+  color: #00ffaa;
+  font-size: 12px;
+}
+
+#bxp-summary-section td {
+  border-bottom: 1px solid #222;
+  font-size: 12px;
+}
+
+#bxp-summary-section tr:last-child td {
+  border-bottom: none;
+}
+
+.bxp-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  justify-content: center;
+}
+
+.bxp-controls input[type="number"] {
+  width: 40px;
+  font-size: 11px;
+  margin: 0 2px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background: #191c20;
+  color: #fff;
+  padding: 1px 3px;
+}
+
+.bxp-controls button {
+  font-size: 11px;
+  padding: 0 5px;
+  border: none;
+  background: #222;
+  color: #00ffaa;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bxp-controls button:hover {
+  background: #444;
+}
+
+#settings-panel {
+  position: absolute;
+  top: 40px; 
+  left: calc(40px + 320px + 10px);
+  background: rgba(25, 25, 25, 0.97);
+  color: #fff;
+  padding: 0.7em 0.8em;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 20;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  min-width: 180px;
+  display: none;
+}
+
+#settings-panel input[type="checkbox"] {
+  margin-right: 0.45em;
+}
+
+#settings-panel button {
+  margin-top: 0.55em;
+  background-color: #333;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+#settings-panel button:hover {
+  background-color: #444;
+}
+
+#toggle-job-list {
+  display: inline-block;
+  background: #2c2f34;
+  border: none;
+  color: #00ffaa;
+  padding: 2px 6px;
+  margin-right: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+#toggle-job-list:hover {
+  background: #444;
+}
+
+#resize-handle {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  background: url('data:image/svg+xml;utf8,<svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="12" width="12" height="2" rx="1" fill="%2300ffaa"/><rect x="6" y="8" width="8" height="2" rx="1" fill="%2300ffaa"/><rect x="10" y="4" width="4" height="2" rx="1" fill="%2300ffaa"/></svg>') no-repeat center center;
+  cursor: nwse-resize;
+  z-index: 100;
+  opacity: 0.8;
+  border-radius: 3px;
+}
+
+#resize-handle:hover {
+  opacity: 1;
+  background-color: #00ffaa33;
+}

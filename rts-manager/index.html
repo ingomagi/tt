@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RTS Card Manager</title>
+  <style>
+    :root{
+      --bg: #0d1117;
+      --panel: rgba(15, 20, 25, 0.85);
+      --panel-border: rgba(255,255,255,.06);
+      --panel-border-strong: rgba(255,255,255,.10);
+      --muted: #6b7280;
+      --text: #d1d5db;
+      --text-bright: #f3f4f6;
+      --primary: #0ea5e9;
+      --primary-2: #0284c7;
+      --success: #10b981;
+      --danger: #dc2626;
+      --shadow: 0 10px 24px rgba(0,0,0,.4);
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background: transparent;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+    }
+
+    #tracker{
+      position: fixed;
+      top: 50px; left: 50px;
+      min-width: 300px;
+      max-width: 360px;
+      user-select: none;
+      cursor: move;
+      z-index: 9999;
+
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+
+    #tracker.minimized{
+      min-width: 200px;
+      max-width: 200px;
+    }
+
+    .header{
+      display:flex; align-items:center; gap:.6rem;
+      padding: .9rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      background: rgba(0,0,0,.2);
+    }
+    .header .dot{
+      width:10px; height:10px; border-radius:999px; background: var(--primary);
+      box-shadow: 0 0 0 3px rgba(14,165,233,.08);
+      flex: 0 0 auto;
+    }
+    .header-title{
+      font-weight:700;
+      font-size: 0.95rem;
+      letter-spacing:.2px;
+      color: var(--text-bright);
+    }
+    .header-sub{
+      margin-left:auto;
+      font-size:.75rem; color: var(--muted);
+    }
+
+    .minimize-btn{
+      margin-left: .5rem;
+      width: 20px; height: 20px;
+      border: none;
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .minimize-btn:hover{
+      background: rgba(255,255,255,.12);
+      color: var(--text-bright);
+    }
+
+    .content{
+      padding: .9rem 1rem 1rem;
+    }
+
+    #tracker.minimized .content{
+      display: none;
+    }
+
+    .row{
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 12px;
+      padding: .65rem .75rem;
+      background: rgba(0,0,0,.15);
+      border: 1px solid rgba(255,255,255,.04);
+      border-radius: 12px;
+    }
+    .row + .row{ margin-top:.6rem; }
+    .row .label{
+      font-size: .9rem;
+      color: var(--text-bright);
+    }
+    .row .desc{
+      font-size: .75rem; color: var(--muted);
+      margin-top: .15rem;
+    }
+
+    .checkbox-wrapper{
+      position: relative;
+      flex: 0 0 auto;
+    }
+    
+    .checkbox{
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,.2);
+      border-radius: 4px;
+      background: rgba(0,0,0,.3);
+      cursor: pointer;
+      position: relative;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    
+    .checkbox:hover{
+      border-color: rgba(255,255,255,.3);
+    }
+    
+    .checkbox:checked{
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border-color: var(--primary);
+    }
+    
+    .checkbox:checked::after{
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .checkbox:focus-visible{
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .status{
+      text-align:center;
+      padding: .55rem .75rem;
+      border-radius: 12px;
+      font-size: .85rem;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,.04);
+    }
+    .status.enabled{
+      color: var(--success);
+      background: rgba(16,185,129,.08);
+      box-shadow: inset 0 0 0 1px rgba(16,185,129,.15);
+    }
+    .status.disabled{
+      color: #f87171;
+      background: rgba(220,38,38,.08);
+      box-shadow: inset 0 0 0 1px rgba(220,38,38,.15);
+    }
+
+    .rts-count{
+      text-align:center;
+      padding: .6rem .75rem;
+      border-radius: 12px;
+      font-size: .85rem;
+      color: var(--muted);
+      background: rgba(0,0,0,.2);
+      border: 1px solid rgba(255,255,255,.04);
+    }
+
+    .btn{
+      appearance: none; -webkit-appearance: none;
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:.5rem;
+      width:100%;
+      padding:.65rem .9rem;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.06);
+      font-weight:700; font-size:.9rem;
+      cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn-primary{
+      color:#fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border-color: rgba(14,165,233,.3);
+      box-shadow: 0 8px 20px rgba(2,132,199,.12);
+    }
+    .btn-primary:hover{
+      box-shadow: 0 12px 24px rgba(2,132,199,.18);
+      border-color: rgba(14,165,233,.5);
+    }
+
+    .btn-danger{
+      color:#fff;
+      background: linear-gradient(135deg, var(--danger), #b91c1c);
+      border-color: rgba(220,38,38,.3);
+      box-shadow: 0 8px 20px rgba(220,38,38,.12);
+    }
+    .btn-danger:hover{
+      box-shadow: 0 12px 24px rgba(220,38,38,.18);
+      border-color: rgba(220,38,38,.5);
+    }
+    .btn:disabled{
+      opacity:.4; cursor:not-allowed; transform:none;
+      box-shadow:none;
+    }
+
+    .stack{ display:grid; gap:.6rem; }
+    .stack-lg{ display:grid; gap:.8rem; }
+
+    .visually-hidden{
+      position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+  </style>
+</head>
+<body>
+  <div id="tracker" aria-label="RTS Card Auto-Deleter panel">
+    <div class="header" aria-grabbed="false">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="header-title">RTS Card Manager</div>
+      <div class="header-sub">v1.0</div>
+      <button class="minimize-btn" id="minimize-btn" aria-label="Minimize panel">−</button>
+    </div>
+
+    <div class="content stack-lg">
+      <div class="row">
+        <div>
+          <div class="label">Auto-Delete RTS Cards</div>
+          <div class="desc">Continuously remove cards detected as RTS</div>
+        </div>
+        <div class="checkbox-wrapper">
+          <input type="checkbox" class="checkbox" id="auto-delete-checkbox" aria-label="Toggle auto delete">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <div class="label">Auto-Backpack RTS Cards</div>
+          <div class="desc">Continuously store cards detected as RTS</div>
+        </div>
+        <div class="checkbox-wrapper">
+          <input type="checkbox" class="checkbox" id="auto-backpack-checkbox" aria-label="Toggle auto backpack">
+        </div>
+      </div>
+
+      <!-- Status + count -->
+      <div class="status disabled" id="status" aria-live="polite">Mode: DISABLED</div>
+      <div class="rts-count" id="rts-count">RTS Cards: 0</div>
+
+      <div class="stack">
+        <button class="btn btn-danger" id="manual-delete">Delete All RTS Cards</button>
+        <button class="btn btn-primary" id="manual-backpack">Backpack All RTS Cards</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=20250906"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+/* Custom dark transparent theme for Bootstrap blessing tracker */
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: transparent;
+}
+
+#tracker {
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  width: 300px;
+  z-index: 9999;
+  cursor: move;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  transition: none;
+}
+
+#tracker.card {
+  background: rgba(33, 37, 41, 0.85) !important;
+  border: 1px solid rgba(108, 117, 125, 0.3) !important;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+  background: rgba(52, 58, 64, 0.6) !important;
+  border-bottom: 1px solid rgba(108, 117, 125, 0.3) !important;
+}
+
+.card-body {
+  background: transparent !important;
+}
+
+/* Count cards styling */
+.count .card {
+  background: rgba(108, 117, 125, 0.15) !important;
+  border: 1px solid rgba(108, 117, 125, 0.2) !important;
+}
+
+/* Remove count update animation */
+
+/* Button enhancements */
+.btn {
+  border: none !important;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.btn-success {
+  background: rgba(25, 135, 84, 0.8) !important;
+}
+
+.btn-danger {
+  background: rgba(220, 53, 69, 0.8) !important;
+}
+
+.btn-warning {
+  background: rgba(255, 193, 7, 0.8) !important;
+  color: #000 !important;
+}
+
+.btn-outline-warning {
+  background: rgba(255, 193, 7, 0.1) !important;
+  border: 1px solid rgba(255, 193, 7, 0.5) !important;
+  color: #ffc107 !important;
+}
+
+.btn-outline-info {
+  background: rgba(13, 202, 240, 0.1) !important;
+  border: 1px solid rgba(13, 202, 240, 0.5) !important;
+  color: #0dcaf0 !important;
+}
+
+/* Form switches */
+.form-check-input {
+  background-color: rgba(108, 117, 125, 0.3) !important;
+  border: 1px solid rgba(108, 117, 125, 0.5) !important;
+}
+
+.form-check-input:checked {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+}
+
+.form-check-input:focus {
+  box-shadow: none !important;
+}
+
+.form-check-label {
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* Text colors */
+.text-info {
+  color: #0dcaf0 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-muted {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.text-light {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Border styling */
+.border-secondary {
+  border-color: rgba(108, 117, 125, 0.3) !important;
+}
+
+/* Card title styling */
+.card-title {
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  #tracker {
+    width: 280px;
+    top: 20px;
+    left: 20px;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+}
+
+/* Scrollbar for the entire UI */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(13, 202, 240, 0.6);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 202, 240, 0.8);
+}
+
+/* Remove glow effects */
+
+/* Loading states */
+.btn:disabled {
+  background: rgba(108, 117, 125, 0.3) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}

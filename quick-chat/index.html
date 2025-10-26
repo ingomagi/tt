@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quick Chat • UserApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { 
+      --bg:#0b1220; --panel:#111827; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8; 
+      --border:#1f2937; --accent:#0ea5e9; --accent-hover:#0284c7; --radius:16px; 
+      --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+    }
+    html,body{margin:0;height:100%;background:transparent;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
+    .wrap{
+      position:fixed;top:24px;left:24px;width:min(420px,calc(100vw - 48px));
+      background:linear-gradient(135deg,var(--panel) 0%,var(--panel2) 100%);
+      border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05) inset;
+    }
+    .drag{
+      display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+      cursor:move;border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+      border-radius:var(--radius) var(--radius) 0 0;
+    }
+    .drag h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.4px;color:var(--accent)}
+    .drag .row{gap:8px}
+    .pad{padding:16px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .section-title{
+      font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;
+      margin:16px 0 10px;font-weight:600;
+    }
+    .section-title:first-child{margin-top:0}
+    .select,.input,.btn{
+      border:1px solid var(--border);background:rgba(11,18,32,.8);color:var(--text);
+      border-radius:10px;padding:10px 14px;font-size:14px;transition:all .2s ease;
+    }
+    .select{min-width:140px;cursor:pointer}
+    .select:hover,.input:hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
+    .select:focus,.input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,.2)}
+    .input{flex:1 1 auto}
+    .btn{
+      cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+      border:none;color:white;font-weight:500;transition:all .15s ease;
+      box-shadow:0 4px 12px rgba(14,165,233,.3);
+    }
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,165,233,.4);filter:brightness(1.05)}
+    .btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(14,165,233,.3)}
+    .icon-btn{
+      background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);
+      border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;
+      transition:all .2s ease;font-weight:500;
+    }
+    .icon-btn:hover{background:rgba(255,255,255,.1);color:var(--text);border-color:var(--accent)}
+    .foot{
+      display:flex;justify-content:space-between;align-items:center;padding:12px 16px;
+      border-top:1px solid var(--border);color:var(--muted);
+      border-radius:0 0 var(--radius) var(--radius);
+      background:rgba(0,0,0,.1);
+    }
+    .small{font-size:12px;color:var(--muted)}
+    .kbd{
+      font-family:ui-monospace,Consolas,monospace;padding:4px 8px;
+      border:1px solid var(--border);border-radius:6px;background:rgba(11,18,32,.6);
+      font-size:11px;color:var(--accent);
+    }
+    .channel-badge{
+      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;
+      background:var(--accent);color:white;border-radius:20px;font-size:11px;
+      font-weight:600;text-transform:uppercase;letter-spacing:.1em;
+    }
+    #dragHandle { cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
+    #dragHandle.dragging { cursor: grabbing; }
+    .wrap.minimized .pad, .wrap.minimized .foot { display: none; }
+    .wrap.minimized { width: auto; min-width: 200px; }
+    .wrap.minimized .drag { border-bottom: none; border-radius: var(--radius); }
+    .presets-list{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto}
+    .preset-item{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+      background:rgba(255,255,255,.02);transition:all .2s ease;
+    }
+    .preset-item:hover{border-color:var(--accent);background:rgba(255,255,255,.05)}
+    .preset-text{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+    .preset-actions{display:flex;gap:6px}
+    .preset-send{
+      background:var(--success);border:none;color:white;padding:6px 10px;
+      border-radius:6px;font-size:11px;cursor:pointer;font-weight:500;
+    }
+    .preset-send:hover{background:#059669;transform:translateY(-1px)}
+    .preset-send:disabled{background:#6b7280;cursor:not-allowed;transform:none}
+    .preset-send.cooldown{background:#6b7280;cursor:not-allowed;position:relative}
+    .preset-delete{
+      background:var(--danger);border:none;color:white;padding:6px 8px;
+      border-radius:6px;font-size:11px;cursor:pointer;font-weight:500;
+    }
+    .preset-delete:hover{background:#dc2626;transform:translateY(-1px)}
+    .empty-presets{
+      text-align:center;padding:20px;color:var(--muted);font-size:13px;
+      border:1px dashed var(--border);border-radius:10px;
+    }
+    .confirm-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:999999;
+      align-items:center;justify-content:center;
+    }
+    .confirm-dialog{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:20px;max-width:300px;box-shadow:0 20px 60px rgba(0,0,0,.7);
+    }
+    .confirm-text{color:var(--text);margin-bottom:16px;font-size:14px;text-align:center}
+    .confirm-buttons{display:flex;gap:8px;justify-content:center}
+    .confirm-btn{
+      padding:8px 16px;border:none;border-radius:8px;font-size:12px;
+      cursor:pointer;font-weight:500;transition:all .2s ease;
+    }
+    .confirm-yes{background:var(--danger);color:white}
+    .confirm-yes:hover{background:#dc2626;transform:translateY(-1px)}
+    .confirm-no{background:var(--border);color:var(--text)}
+    .confirm-no:hover{background:var(--muted);color:var(--bg)}
+  </style>
+</head>
+<body>
+  <div class="wrap" id="panel" aria-live="polite">
+    <div class="drag" id="dragHandle">
+      <h1>Quick Chat</h1>
+      <div class="row">
+        <button class="icon-btn" id="btnMinimize" title="Minimize (show only title bar)">−</button>
+        <button class="icon-btn" id="btnClose" title="Close UI (return focus)">Close</button>
+      </div>
+    </div>
+
+    <div class="pad">
+      <div class="row">
+        <div>
+          <div class="section-title">Channel</div>
+          <select id="channelSelect" class="select" title="Chat channel">
+            <option value="Chat" selected>Chat</option>
+            <option value="Faction">Faction</option>
+          </select>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:10px;align-items:flex-end">
+          <span class="channel-badge" id="channelBadge">Chat</span>
+        </div>
+      </div>
+
+      <div class="section-title">Save Preset Message</div>
+      <div class="row">
+        <input id="customMsg" class="input" type="text" placeholder="Type a message to save as preset…" maxlength="256" />
+        <button id="sendCustom" class="btn">Save Preset</button>
+      </div>
+
+      <div class="section-title">Saved Messages</div>
+      <div id="presetsList" class="presets-list"></div>
+    </div>
+
+    <div class="foot">
+      <span class="small">Quick Chat for FiveM</span>
+      <span class="small">Drag to reposition</span>
+    </div>
+  </div>
+
+  <div id="dragOverlay" style="display:none;position:fixed;inset:0;z-index:999999;"></div>
+  
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-dialog">
+      <div class="confirm-text" id="confirmText">Delete this preset message?</div>
+      <div class="confirm-buttons">
+        <button class="confirm-btn confirm-yes" id="confirmYes">Delete</button>
+        <button class="confirm-btn confirm-no" id="confirmNo">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const NUI_URL = 'https://chat/chatResult';
+    const LS_CHANNEL = 'qc.channel.nui.v1';
+    const LS_PRESETS = 'qc.presets.nui.v1';
+    const COOLDOWN_MS = 5000;
+    let lastSendTime = 0;
+    let cooldownTimers = new Map();
+
+    function isFiveM() {
+      const fivemChecks = [
+        () => typeof window.invokeNative !== 'undefined',
+        () => typeof window.GetParentResourceName !== 'undefined',
+        () => window.location.protocol === 'nui:',
+        () => window.location.hostname.includes('cfx'),
+        () => navigator.userAgent.includes('CEF')
+      ];
+      
+      const results = fivemChecks.map(check => {
+        try { return check(); } catch { return false; }
+      });
+      
+      const hasHttpsButFiveM = window.location.protocol === 'https:' && 
+                               (typeof window.invokeNative !== 'undefined' || 
+                                navigator.userAgent.includes('CitizenFX'));
+      
+      const isFiveMDetected = results.some(result => result === true) && !hasHttpsButFiveM;
+      
+      console.log('🔍 FiveM Detection:', {
+        invokeNative: typeof window.invokeNative,
+        GetParentResourceName: typeof window.GetParentResourceName,
+        protocol: window.location.protocol,
+        hostname: window.location.hostname,
+        userAgent: navigator.userAgent,
+        hasHttpsButFiveM,
+        detected: isFiveMDetected
+      });
+      
+      return isFiveMDetected;
+    }
+
+    const $ = id => document.getElementById(id);
+    const els = {
+      panel: $('panel'),
+      drag: $('dragHandle'),
+      customMsg: $('customMsg'),
+      sendCustom: $('sendCustom'),
+      btnMinimize: $('btnMinimize'),
+      btnClose: $('btnClose'),
+      channelSelect: $('channelSelect'),
+      channelBadge: $('channelBadge'),
+      presetsList: $('presetsList'),
+      confirmOverlay: $('confirmOverlay'),
+      confirmText: $('confirmText'),
+      confirmYes: $('confirmYes'),
+      confirmNo: $('confirmNo')
+    };
+
+    const sanitize = s => String(s).replace(/\s+/g,' ').trim().slice(0,256);
+    const save = (k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} };
+    const load = (k,d)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch{ return d; } };
+    const toast = (t)=> window.parent.postMessage?.({ type:'info', text:t, time:3 }, '*');
+
+    function currentChannel(){
+      return els.channelSelect.value;
+    }
+
+    async function sendNui(message, channel, buttonElement = null){
+      const now = Date.now();
+      const timeLeft = COOLDOWN_MS - (now - lastSendTime);
+      
+      if (timeLeft > 0) {
+        toast(`Please wait ${Math.ceil(timeLeft / 1000)} seconds before sending another message.`);
+        return false;
+      }
+
+      const msg = sanitize(message);
+      const ch  = sanitize(channel);
+      if (!msg) return false;
+      if (!ch) return toast('Pick or enter a channel.'), false;
+      
+      try {
+        const runningInFiveM = isFiveM();
+        const isHttpsWithCitizenFX = window.location.protocol === 'https:' && 
+                                     navigator.userAgent.includes('CitizenFX');
+        const willUseFiveMEndpoint = runningInFiveM || isHttpsWithCitizenFX;
+        
+        console.log('🎮 Sending chat message:', { 
+          message: msg, 
+          channel: ch, 
+          runningInFiveM,
+          isHttpsWithCitizenFX,
+          willUseFiveMEndpoint,
+          url: willUseFiveMEndpoint ? NUI_URL : '/chat/chatResult'
+        });
+        
+        if (willUseFiveMEndpoint) {
+          console.log('🎮 Using FiveM NUI endpoint...');
+          await fetch(NUI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, channel: ch })
+          });
+        } else {
+          console.log('🌐 Making request to local server...');
+          const response = await fetch('/chat/chatResult', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, channel: ch })
+          });
+          console.log('🌐 Response received:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+          }
+          
+          const responseData = await response.json();
+          console.log('🌐 Response data:', responseData);
+        }
+        lastSendTime = now;
+        toast(`Sent (${ch}): ${msg}`);
+        if (buttonElement) {
+          startCooldownForAllButtons();
+        }
+        return true;
+      } catch (e) {
+        console.error('NUI send failed:', e);
+        console.error('NUI send error details:', {
+          name: e.name,
+          message: e.message,
+          stack: e.stack,
+          fivemDetected: isFiveM()
+        });
+        toast(`Send failed: ${e.message}. Check if ${isFiveM() ? 'FiveM resource' : 'server'} is running.`);
+        return false;
+      }
+    }
+
+    let confirmCallback = null;
+    
+    function showConfirm(message, onConfirm) {
+      els.confirmText.textContent = message;
+      els.confirmOverlay.style.display = 'flex';
+      confirmCallback = onConfirm;
+    }
+    
+    function hideConfirm() {
+      els.confirmOverlay.style.display = 'none';
+      confirmCallback = null;
+    }
+    
+    els.confirmYes.onclick = () => {
+      if (confirmCallback) confirmCallback();
+      hideConfirm();
+    };
+    
+    els.confirmNo.onclick = hideConfirm;
+    
+    els.confirmOverlay.onclick = (e) => {
+      if (e.target === els.confirmOverlay) hideConfirm();
+    };
+
+    let isMinimized = false;
+    
+    function toggleMinimize() {
+      isMinimized = !isMinimized;
+      if (isMinimized) {
+        els.panel.classList.add('minimized');
+        els.btnMinimize.textContent = '+';
+        els.btnMinimize.title = 'Expand (show full UI)';
+      } else {
+        els.panel.classList.remove('minimized');
+        els.btnMinimize.textContent = '−';
+        els.btnMinimize.title = 'Minimize (show only title bar)';
+      }
+    }
+
+    function startCooldownForAllButtons() {
+      cooldownTimers.forEach(timer => clearInterval(timer));
+      cooldownTimers.clear();
+      
+      const sendButtons = document.querySelectorAll('.preset-send');
+      sendButtons.forEach(button => {
+        if (button.disabled) return;
+        
+        button.disabled = true;
+        button.classList.add('cooldown');
+        
+        let timeLeft = COOLDOWN_MS / 1000;
+        const originalText = button.textContent;
+        
+        const updateCountdown = () => {
+          if (timeLeft <= 0) {
+            button.disabled = false;
+            button.classList.remove('cooldown');
+            button.textContent = originalText;
+            return;
+          }
+          
+          button.textContent = `${timeLeft}s`;
+          timeLeft--;
+        };
+        
+        updateCountdown();
+        
+        const timer = setInterval(updateCountdown, 1000);
+        cooldownTimers.set(button, timer);
+        
+        setTimeout(() => {
+          clearInterval(timer);
+          cooldownTimers.delete(button);
+          button.disabled = false;
+          button.classList.remove('cooldown');
+          button.textContent = originalText;
+        }, COOLDOWN_MS);
+      });
+    }
+
+    function loadPresets(){
+      return load(LS_PRESETS, []);
+    }
+
+    function savePresets(presets){
+      save(LS_PRESETS, presets);
+    }
+
+    function addPreset(message){
+      const msg = sanitize(message);
+      if (!msg) return false;
+      
+      const presets = loadPresets();
+      if (presets.includes(msg)) {
+        toast('Message already saved as preset!');
+        return false;
+      }
+      
+      presets.push(msg);
+      savePresets(presets);
+      renderPresets();
+      toast('Preset saved!');
+      return true;
+    }
+
+    function deletePreset(index){
+      const presets = loadPresets();
+      if (index >= 0 && index < presets.length) {
+        presets.splice(index, 1);
+        savePresets(presets);
+        renderPresets();
+        toast('Preset deleted!');
+      }
+    }
+
+    function renderPresets(){
+      const presets = loadPresets();
+      els.presetsList.innerHTML = '';
+
+      if (presets.length === 0) {
+        els.presetsList.innerHTML = '<div class="empty-presets">No saved messages yet.<br>Type a message above and click "Save Preset".</div>';
+        return;
+      }
+
+      presets.forEach((preset, index) => {
+        const item = document.createElement('div');
+        item.className = 'preset-item';
+        
+        const text = document.createElement('div');
+        text.className = 'preset-text';
+        text.textContent = preset;
+        text.title = preset;
+        
+        const actions = document.createElement('div');
+        actions.className = 'preset-actions';
+        
+        const sendBtn = document.createElement('button');
+        sendBtn.className = 'preset-send';
+        sendBtn.textContent = 'Send';
+        sendBtn.onclick = () => {
+          sendNui(preset, currentChannel(), sendBtn);
+        };
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'preset-delete';
+        deleteBtn.textContent = '✕';
+        deleteBtn.title = 'Delete preset';
+        deleteBtn.onclick = () => {
+          showConfirm('Delete this preset message?', () => {
+            deletePreset(index);
+          });
+        };
+        
+        actions.appendChild(sendBtn);
+        actions.appendChild(deleteBtn);
+        item.appendChild(text);
+        item.appendChild(actions);
+        els.presetsList.appendChild(item);
+      });
+    }
+
+    function updateChannelBadge(){
+      els.channelBadge.textContent = els.channelSelect.value;
+    }
+    function loadChannelUI(){
+      const saved = load(LS_CHANNEL, 'Chat');
+      els.channelSelect.value = saved;
+      updateChannelBadge();
+    }
+    function persistChannelUI(){
+      save(LS_CHANNEL, els.channelSelect.value);
+      updateChannelBadge();
+    }
+    els.channelSelect.addEventListener('change', persistChannelUI);
+
+    els.sendCustom.onclick = ()=>{ 
+      if (addPreset(els.customMsg.value)) {
+        els.customMsg.value = '';
+        els.customMsg.focus();
+      }
+    };
+    els.customMsg.addEventListener('keydown', e=>{ 
+      if(e.key==='Enter'){ 
+        e.preventDefault(); 
+        els.sendCustom.click(); 
+      }
+    });
+    els.btnMinimize.onclick = toggleMinimize;
+    els.btnClose.onclick = ()=> window.parent.postMessage({ type:'close' }, '*');
+
+    const escapeListener = (e) => {
+      if (e.key === "Escape") {
+        window.parent.postMessage({type: "pin"}, "*");
+      }
+    };
+    window.addEventListener('keydown', escapeListener);
+
+    (function(){
+      const panel = document.getElementById('panel');
+      const handle = document.getElementById('dragHandle');
+      const overlay = document.getElementById('dragOverlay');
+      const POS_KEY = 'qc.pos';
+
+      try {
+        const r = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+        if (r && typeof r.x === 'number' && typeof r.y === 'number') {
+          panel.style.left = r.x + 'px';
+          panel.style.top  = r.y + 'px';
+          panel.style.position = 'fixed';
+        }
+      } catch {}
+
+      function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+      function savePos(){
+        try {
+          const x = parseInt(panel.style.left || '24', 10);
+          const y = parseInt(panel.style.top  || '24', 10);
+          localStorage.setItem(POS_KEY, JSON.stringify({ x, y }));
+        } catch {}
+      }
+
+      let startX = 0, startY = 0, origX = 0, origY = 0;
+
+      function onPointerDown(e){
+        const t = e.target;
+        if (['BUTTON','INPUT','SELECT','TEXTAREA','A'].includes(t.tagName)) return;
+
+        handle.classList.add('dragging');
+        overlay.style.display = 'block';
+        panel.style.position = 'fixed';
+
+        const r = panel.getBoundingClientRect();
+        origX = r.left;
+        origY = r.top;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        try { handle.setPointerCapture(e.pointerId); } catch {}
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        window.addEventListener('pointermove', onPointerMove, { passive:false, capture:true });
+        window.addEventListener('pointerup',   onPointerUp,   { passive:false, capture:true });
+        window.addEventListener('pointercancel', onPointerUp, { passive:false, capture:true });
+      }
+
+      function onPointerMove(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const w  = panel.offsetWidth, h  = panel.offsetHeight;
+        const nx = clamp(origX + dx, 8, Math.max(8, vw - w - 8));
+        const ny = clamp(origY + dy, 8, Math.max(8, vh - h - 8));
+
+        panel.style.left = nx + 'px';
+        panel.style.top  = ny + 'px';
+      }
+
+      function onPointerUp(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        handle.classList.remove('dragging');
+        overlay.style.display = 'none';
+
+        try { handle.releasePointerCapture(e.pointerId); } catch {}
+
+        window.removeEventListener('pointermove', onPointerMove, true);
+        window.removeEventListener('pointerup',   onPointerUp,   true);
+        window.removeEventListener('pointercancel', onPointerUp, true);
+
+        savePos();
+      }
+
+      handle.addEventListener('pointerdown', onPointerDown, { passive:false });
+    })();
+
+    loadChannelUI();
+    renderPresets();
+    try{
+      if(!sessionStorage.getItem('qc.greeted')){
+        toast('Quick Chat ready — save messages as presets and click to send!');
+        sessionStorage.setItem('qc.greeted','1');
+      }
+    }catch{}
+  </script>
+</body>
+</html>

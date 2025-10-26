@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Sawmill Automation & Status</title>
+    <link rel="shortcut icon" type="image/png" href="https://tidalfaction.com/tidal.png"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        :root {
+            --bs-body-bg: transparent !important;
+        }
+
+        [data-bs-theme="dark"] {
+            color-scheme: unset !important;
+        }
+
+        .bg-opacity-80 { --bs-bg-opacity: 0.8 !important; }
+        .bg-opacity-90 { --bs-bg-opacity: 0.9 !important; }
+        .bg-opacity-95 { --bs-bg-opacity: 0.95 !important; }
+
+        .main-container {
+            width: min(320px, 100vw - 20px);
+            height: min(320px, 100vh - 20px);
+            position: fixed;
+            top: 50px;
+            left: 50px;
+            cursor: move;
+            background: rgba(33, 37, 41, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            max-width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
+            min-width: 280px;
+            min-height: 200px;
+            overflow: hidden;
+            transform: none;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            background: transparent;
+            z-index: 100;
+        }
+
+        .resize-handle.corner {
+            width: 18px;
+            height: 18px;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -5px;
+            right: -5px;
+            cursor: se-resize;
+            background: linear-gradient(135deg, transparent 0%, transparent 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.2) 60%, transparent 70%, transparent 100%);
+        }
+
+        .resize-handle.bottom-right::before {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background-image: 
+                linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 32%, rgba(255, 255, 255, 0.3) 34%, transparent 36%),
+                linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.3) 42%, rgba(255, 255, 255, 0.3) 44%, transparent 46%),
+                linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.3) 52%, rgba(255, 255, 255, 0.3) 54%, transparent 56%);
+            pointer-events: none;
+        }
+
+        .resize-handle:hover {
+            background: rgba(13, 110, 253, 0.3);
+        }
+
+        .resize-handle.bottom-right:hover::before {
+            background-image: 
+                linear-gradient(45deg, transparent 30%, rgba(13, 110, 253, 0.6) 32%, rgba(13, 110, 253, 0.6) 34%, transparent 36%),
+                linear-gradient(45deg, transparent 40%, rgba(13, 110, 253, 0.6) 42%, rgba(13, 110, 253, 0.6) 44%, transparent 46%),
+                linear-gradient(45deg, transparent 50%, rgba(13, 110, 253, 0.6) 52%, rgba(13, 110, 253, 0.6) 54%, transparent 56%);
+        }
+
+        .main-container.resizing {
+            user-select: none;
+        }
+
+        .main-container.resizing * {
+            pointer-events: none;
+        }
+
+        .main-container.dragging {
+            opacity: 0.9;
+            z-index: 1000;
+        }
+
+        .main-container.dragging * {
+            pointer-events: none;
+        }
+
+
+
+        .main-panel {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 8px;
+            box-sizing: border-box;
+            border-radius: 6px;
+        }
+
+        .main-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .main-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .main-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .section-divider {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+        }
+
+
+
+        .toggle-section {
+            background: rgba(13, 110, 253, 0.1);
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .toggle-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .toggle-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .goal-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .goal-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .goal-input {
+            background: rgba(50, 50, 50, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 80px;
+            text-align: center;
+        }
+
+        .goal-input:focus {
+            border-color: rgba(13, 110, 253, 0.6);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+
+        .goal-progress {
+            color: #03dac6;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .storage-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .storage-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+        }
+
+        .storage-content {
+            padding: 0;
+        }
+
+        .storage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s ease;
+        }
+
+        .storage-item:last-child {
+            border-bottom: none;
+        }
+
+        .storage-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .storage-item-name {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .storage-item-amount {
+            color: #03dac6;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .storage-item.craft-potential {
+            background: rgba(40, 167, 69, 0.1);
+            border-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .storage-item.craft-potential .storage-item-name,
+        .storage-item.craft-potential .storage-item-amount {
+            color: #4ade80;
+        }
+
+        .btn {
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-danger:hover {
+            background: rgba(220, 38, 38, 1) !important;
+            transform: scale(0.95);
+        }
+
+        .faction-notice {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .bi-gear {
+            color: #28a745;
+        }
+
+        .bi-boxes {
+            color: #17a2b8;
+        }
+
+        .bi-backpack {
+            color: #ffc107;
+        }
+
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .confirm-modal.show {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            background: rgba(33, 37, 41, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: modalSlideIn 0.2s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .confirm-dialog h6 {
+            margin-bottom: 1rem;
+            color: #dc3545;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+
+        .confirm-dialog .btn-group {
+            gap: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .controls-section {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .controls-section.collapsed .controls-content {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .controls-content {
+            transition: all 0.3s ease;
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .controls-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 4px 0;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .controls-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .controls-toggle {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 1rem;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .controls-toggle:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .controls-toggle i {
+            transition: transform 0.3s ease;
+        }
+
+        .controls-section.collapsed .controls-toggle i {
+            transform: rotate(180deg);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                width: 95vw;
+                height: 80vh;
+                top: 10vh;
+                left: 2.5vw;
+            }
+            
+            .toggle-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .goal-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container" id="automationWindow">
+        <div class="resize-handle corner bottom-right"></div>
+        
+        <div class="main-panel">
+            <div class="header-section section-divider" id="dragHandle">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="bi bi-gear text-success me-2"></i>
+                            Sawmill Automation
+                        </h6>
+                        <small class="text-muted">Log collection & plank production</small>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-light" id="refreshBtn" title="Refresh Page">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" title="Help & Info" data-bs-toggle="dropdown">
+                            <i class="bi bi-question-circle"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-dark p-3" style="max-width: 300px;">
+                            <h6 class="dropdown-header">Sawmill Automation v3.0.3</h6>
+                            <p class="small mb-2">Created by Rice for convenient plank production.</p>
+                            <p class="small mb-2">This app was fixed by 🐹 Hamz.</p>
+                            <p class="small mb-0">Contact: discord @rice9999 for bugs or suggestions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section section-divider">
+                <div class="controls-header" id="controlsHeader">
+                    <h6 class="mb-0">
+                        <i class="bi bi-sliders text-info me-2"></i>
+                        Controls
+                    </h6>
+                    <button class="controls-toggle" id="controlsToggle" title="Toggle Controls">
+                        <i class="bi bi-chevron-up"></i>
+                    </button>
+                </div>
+                <div class="controls-content">
+                    <div class="toggle-section">
+                        <div class="toggle-group">
+                        <div class="toggle-item">
+                            <input type="checkbox" id="logs-auto-toggle" class="form-check-input">
+                            <label for="logs-auto-toggle" class="form-check-label small mb-0">Logs Auto</label>
+                        </div>
+                        <div class="toggle-item">
+                            <input type="checkbox" id="ty-auto-toggle" class="form-check-input">
+                            <label for="ty-auto-toggle" class="form-check-label small mb-0">TY Auto</label>
+                        </div>
+                        <div class="toggle-item">
+                            <input type="checkbox" id="plank-auto-toggle" class="form-check-input">
+                            <label for="plank-auto-toggle" class="form-check-label small mb-0">Plank Auto</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="goal-section">
+                    <h6 class="mb-2">
+                        <i class="bi bi-target text-warning me-2"></i>
+                        Plank Goal
+                    </h6>
+                    <div class="goal-controls">
+                        <label for="goal-input" class="form-label small mb-0">Planks:</label>
+                        <input type="text" id="goal-input" placeholder="e.g. 1k, 2500" class="goal-input">
+                        <span class="goal-progress" id="goal-progress">0/0</span>
+                        <small class="text-muted ms-2" id="logs-needed">(0 logs needed)</small>
+                        <button id="reset-btn" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-arrow-clockwise me-1"></i>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="storage-section mb-3">
+                    <div class="storage-header">
+                        <i class="bi bi-boxes me-2"></i>
+                        Self-Storage
+                    </div>
+                    <div class="storage-content" id="item-list-container">
+                    </div>
+                </div>
+
+                <div class="storage-section">
+                    <div class="storage-header">
+                        <i class="bi bi-backpack me-2"></i>
+                        Inventory
+                    </div>
+                    <div class="storage-content" id="inventory-list-container">
+                    </div>
+                </div>
+
+                <p class="faction-notice">This app can only be used in The Sawmill Faction</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="confirm-modal">
+        <div class="confirm-dialog">
+            <h6><i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Action</h6>
+            <p id="confirm-message">Are you sure you want to proceed?</p>
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary" id="confirm-cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirm-proceed">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    (() => {
+        const CONFIG = {
+            LOGGING_CAMP_MENU: "Trucking: Logging Camp",
+            SAWMILL_MENU: "The Sawmill Faction",
+            TRAIN_NETWORK_MENU: "Train Network",
+            TRUCKING_SAWMILL_MENU: "Trucking: Sawmill",
+            MILL_PLANKS_MENU: "Mill Planks",
+            MAIN_TRAILER_MODEL: "trailerlarge",
+            MK15_MODEL: "mk15",
+            INVENTORY_LOG_CAPACITY: 25,
+            VEHICLE_LOG_CAPACITY: 60,
+            DEBOUNCE_DELAY_MS: 1500,
+            LOGS_PER_PLANK: 1,
+            SAWDUST_PER_PLANK: 2,
+            LOGS_PER_PLANK_BATCH: 5,
+            SAWDUST_PER_PLANK_BATCH: 10,
+            PLANKS_PER_BATCH: 5
+        };
+
+        const ACTIONS = {
+            COLLECT_LOGS_10: "Collect Logs x10",
+            COLLECT_LOGS_5: "Collect Logs x5",
+            DUMP_FROM_TRUNK: "Dump from Trunk",
+            TAKE_TO_TRUNK: "Take to Trunk",
+            OPEN_STORAGE: "Open Storage",
+            PUT_ALL: "Put All",
+            TAKE: "Take",
+            MOC_TRAILER: "Mobile Operations Center (MK14) (trailerlarge)",
+            DUMP_MK15: "Chernobog Toter (mk15)",
+            PLANKS: "Truck Cargo: Planks",
+            MILL_PLANKS: "Mill Planks",
+            MILL_PLANKS_X5: "Mill Planks x5",
+            GRIND_SAWDUST: "Grind Sawdust"
+        };
+        
+        const NOTIFICATIONS = { INVENTORY_FULL: "~r~Inventory full." };
+
+        const itemMap = {
+            "tcargodust": "Sawdust",
+            "tcargologs": "Logs",
+            "refined_planks": "Planks"
+        };
+        
+        let cache = {};
+        let lastActionTimestamp = 0;
+        let isProcessing = false;
+        let isTyAutoWaitingForMk15 = false;
+        let fillStep = 'trailer'; 
+        let isLogsAutoEnabled = true;
+        let isTyAutoEnabled = false;
+        let plankGoal = 0;
+        let totalPlanksProduced = 0;
+        let goalMet = false;
+        let isPlankAutoEnabled = false;
+        let lastTrunkFullNotification = 0;
+        let plankAutoStorageOpened = false;
+
+        const itemListContainer = document.getElementById('item-list-container');
+        const inventoryListContainer = document.getElementById('inventory-list-container');
+        const draggableWindow = document.getElementById('automationWindow');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const logsAutoToggle = document.getElementById('logs-auto-toggle');
+        const tyAutoToggle = document.getElementById('ty-auto-toggle');
+        const goalInput = document.getElementById('goal-input');
+        const plankAutoToggle = document.getElementById('plank-auto-toggle');
+        const resetBtn = document.getElementById('reset-btn');
+
+        let offsetX, offsetY, startWidth, startHeight, startMouseX, startMouseY;
+        let isResizing = false;
+
+        function loadWindowTransform() {
+            const settings = localStorage.getItem('sawmillSettings');
+            if (!settings) return;
+            
+            try {
+                const parsed = JSON.parse(settings);
+                const container = draggableWindow;
+                
+                if (parsed.windowWidth && parsed.windowHeight) {
+                    const maxWidth = Math.min(parsed.windowWidth, window.innerWidth - 20);
+                    const maxHeight = Math.min(parsed.windowHeight, window.innerHeight - 20);
+                    container.style.width = maxWidth + 'px';
+                    container.style.height = maxHeight + 'px';
+                }
+                
+                if (parsed.windowLeft !== undefined && parsed.windowTop !== undefined) {
+                    const safeLeft = Math.max(0, Math.min(parsed.windowLeft, window.innerWidth - container.offsetWidth));
+                    const safeTop = Math.max(0, Math.min(parsed.windowTop, window.innerHeight - container.offsetHeight));
+                    container.style.left = safeLeft + 'px';
+                    container.style.top = safeTop + 'px';
+                }
+            } catch(e) {}
+        }
+
+        function saveWindowTransform() {
+            const container = draggableWindow;
+            const rect = container.getBoundingClientRect();
+            
+            const settings = {
+                windowWidth: rect.width,
+                windowHeight: rect.height,
+                windowLeft: container.offsetLeft,
+                windowTop: container.offsetTop
+            };
+            
+            localStorage.setItem('sawmillSettings', JSON.stringify(settings));
+        }
+
+        (function attachDragAndResizeNUI() {
+            const container  = document.getElementById('automationWindow');
+            const dragHandle = document.getElementById('dragHandle');
+            const resizeHandle = container.querySelector('.resize-handle.bottom-right');
+
+            dragHandle.style.touchAction = 'none';
+            container.style.userSelect = 'none';
+
+            let isDragging = false, isResizing = false;
+            let startClientX = 0, startClientY = 0;
+            let offsetX = 0, offsetY = 0;
+            let startMouseX = 0, startMouseY = 0;
+            let startWidth = 0, startHeight = 0;
+            const MOVE_THRESHOLD = 2;
+
+            function clampToViewport(left, top, width, height) {
+                const maxLeft = Math.max(0, window.innerWidth  - width  - 10);
+                const maxTop  = Math.max(0, window.innerHeight - height - 10);
+                return {
+                    left: Math.max(0, Math.min(left, maxLeft)),
+                    top:  Math.max(0, Math.min(top,  maxTop))
+                };
+            }
+
+            const usePointer = ('onpointerdown' in window);
+
+            function onPointerDown(e) {
+                if (isResizing) return;
+                if (e.target.closest('button, .btn, .dropdown, [data-bs-toggle]')) return;
+
+                isDragging   = true;
+                startClientX = e.clientX;
+                startClientY = e.clientY;
+
+                const rect = container.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+
+                container.classList.add('dragging');
+
+                try { dragHandle.setPointerCapture(e.pointerId); } catch {}
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                document.addEventListener('pointermove', onPointerMove, { passive: false });
+                const endOnce = () => onPointerEnd(e);
+                document.addEventListener('pointerup', endOnce, { once: true });
+                document.addEventListener('pointercancel', endOnce, { once: true });
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+
+                if (Math.abs(e.clientX - startClientX) + Math.abs(e.clientY - startClientY) < MOVE_THRESHOLD) return;
+
+                const desiredLeft = e.clientX - offsetX;
+                const desiredTop  = e.clientY - offsetY;
+                const rect = container.getBoundingClientRect();
+                const clamped = clampToViewport(desiredLeft, desiredTop, rect.width, rect.height);
+                container.style.left = clamped.left + 'px';
+                container.style.top  = clamped.top  + 'px';
+            }
+
+            function onPointerEnd(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                container.classList.remove('dragging');
+                try { dragHandle.releasePointerCapture?.(e.pointerId); } catch {}
+
+                document.removeEventListener('pointermove', onPointerMove);
+                saveWindowTransform();
+            }
+
+            function onMouseDown(e) {
+                if (isResizing) return;
+                if (e.target.closest('button, .btn, .dropdown, [data-bs-toggle]')) return;
+
+                isDragging   = true;
+                startClientX = e.clientX;
+                startClientY = e.clientY;
+
+                const rect = container.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+
+                container.classList.add('dragging');
+
+                window.addEventListener('mousemove', onMouseMove, { passive: false });
+                window.addEventListener('mouseup',  onMouseUp,   { once: true });
+
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+
+                if (Math.abs(e.clientX - startClientX) + Math.abs(e.clientY - startClientY) < MOVE_THRESHOLD) return;
+
+                const desiredLeft = e.clientX - offsetX;
+                const desiredTop  = e.clientY - offsetY;
+                const rect = container.getBoundingClientRect();
+                const clamped = clampToViewport(desiredLeft, desiredTop, rect.width, rect.height);
+                container.style.left = clamped.left + 'px';
+                container.style.top  = clamped.top  + 'px';
+            }
+
+            function onMouseUp() {
+                if (!isDragging) return;
+                isDragging = false;
+                container.classList.remove('dragging');
+
+                window.removeEventListener('mousemove', onMouseMove);
+                saveWindowTransform();
+            }
+
+            function onResizeStart(e) {
+                isResizing  = true;
+                startMouseX = e.clientX;
+                startMouseY = e.clientY;
+
+                const rect = container.getBoundingClientRect();
+                startWidth  = rect.width;
+                startHeight = rect.height;
+
+                container.classList.add('resizing');
+
+                const moveEv = usePointer ? 'pointermove' : 'mousemove';
+                const upEv   = usePointer ? 'pointerup'   : 'mouseup';
+
+                document.addEventListener(moveEv, onResizeMove, { passive: false });
+                document.addEventListener(upEv,   onResizeEnd,  { once: true });
+
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function onResizeMove(e) {
+                if (!isResizing) return;
+                e.preventDefault();
+
+                const dx = e.clientX - startMouseX;
+                const dy = e.clientY - startMouseY;
+
+                const minW = 280, minH = 200;
+                const desiredW = Math.max(minW, startWidth  + dx);
+                const desiredH = Math.max(minH, startHeight + dy);
+
+                const rect = container.getBoundingClientRect();
+                const maxW = Math.max(minW, window.innerWidth  - rect.left - 10);
+                const maxH = Math.max(minH, window.innerHeight - rect.top  - 10);
+
+                container.style.width  = Math.min(desiredW, maxW) + 'px';
+                container.style.height = Math.min(desiredH, maxH) + 'px';
+            }
+
+            function onResizeEnd() {
+                if (!isResizing) return;
+                isResizing = false;
+                container.classList.remove('resizing');
+
+                const moveEv = usePointer ? 'pointermove' : 'mousemove';
+                document.removeEventListener(moveEv, onResizeMove);
+
+                saveWindowTransform();
+            }
+
+            if (usePointer) {
+                dragHandle.addEventListener('pointerdown', onPointerDown);
+                resizeHandle?.addEventListener('pointerdown', onResizeStart);
+            } else {
+                dragHandle.addEventListener('mousedown', onMouseDown);
+                resizeHandle?.addEventListener('mousedown', onResizeStart);
+            }
+
+            document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
+            document.addEventListener('dragstart',   e => { e.preventDefault(); return false; });
+        })();
+
+
+        refreshBtn.addEventListener('click', () => window.location.reload());
+        
+        const controlsSection = document.querySelector('.controls-section');
+        const controlsHeader = document.getElementById('controlsHeader');
+        const controlsToggle = document.getElementById('controlsToggle');
+        let controlsCollapsed = localStorage.getItem('sawmillControlsCollapsed') === 'true';
+        
+        function toggleControls() {
+            controlsCollapsed = !controlsCollapsed;
+            controlsSection.classList.toggle('collapsed', controlsCollapsed);
+            localStorage.setItem('sawmillControlsCollapsed', controlsCollapsed);
+        }
+        
+        controlsHeader.addEventListener('click', toggleControls);
+        controlsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleControls();
+        });
+        
+        if (controlsCollapsed) {
+            controlsSection.classList.add('collapsed');
+        }
+        
+        logsAutoToggle.addEventListener('change', () => {
+            isLogsAutoEnabled = logsAutoToggle.checked;
+            localStorage.setItem('sawmillLogsAutoEnabled', isLogsAutoEnabled);
+            updateGoalDisplay();
+        });
+        tyAutoToggle.addEventListener('change', () => {
+            isTyAutoEnabled = tyAutoToggle.checked;
+            localStorage.setItem('sawmillTyAutoEnabled', isTyAutoEnabled);
+            updateGoalDisplay();
+        });
+        plankAutoToggle.addEventListener('change', () => {
+            isPlankAutoEnabled = plankAutoToggle.checked;
+            localStorage.setItem('sawmillPlankAutoEnabled', isPlankAutoEnabled);
+            plankAutoStorageOpened = false;
+            updateGoalDisplay();
+        });
+        goalInput.addEventListener('change', () => {
+            const inputValue = goalInput.value;
+            plankGoal = parseGoalValue(inputValue);
+            
+            goalInput.value = formatGoalDisplay(plankGoal);
+            
+            localStorage.setItem('sawmillPlankGoal', plankGoal);
+            const logsNeeded = plankGoal * CONFIG.LOGS_PER_PLANK;
+            document.getElementById('logs-needed').textContent = `(${logsNeeded} logs needed)`;
+            if (plankGoal > 0 && totalPlanksProduced >= plankGoal && !goalMet) {
+                goalMet = true;
+                postCommand("oneliner", { text: `🎉 Plank Goal Achieved! ${totalPlanksProduced}/${plankGoal} planks produced!` });
+            }
+            updateUI();
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            showConfirmModal(
+                'Reset plank progress? This will clear your produced plank count and goal status.',
+                () => {
+                    totalPlanksProduced = 0;
+                    goalMet = false;
+                    localStorage.setItem('sawmillTotalPlanksProduced', '0');
+                    localStorage.setItem('sawmillGoalMet', 'false');
+                    postCommand("notification", { text: "~y~Progress reset!" });
+                    updateUI();
+                }
+            );
+        });
+
+
+        function parseGoalValue(input) {
+            if (!input || typeof input !== 'string') return 0;
+            
+            const cleanInput = input.trim().toLowerCase();
+            if (cleanInput === '') return 0;
+            
+            if (cleanInput.endsWith('k')) {
+                const numberPart = cleanInput.slice(0, -1);
+                const parsed = parseFloat(numberPart);
+                return isNaN(parsed) ? 0 : Math.floor(parsed * 1000);
+            }
+            
+            const parsed = parseInt(cleanInput);
+            return isNaN(parsed) ? 0 : Math.max(0, parsed);
+        }
+        
+        function formatGoalDisplay(value) {
+            if (value >= 1000 && value % 1000 === 0) {
+                return (value / 1000) + 'k';
+            } else if (value >= 1000) {
+                const kValue = value / 1000;
+                return kValue % 1 === 0 ? kValue + 'k' : kValue.toFixed(1) + 'k';
+            }
+            return value.toString();
+        }
+
+        function postCommand(type, data = {}) { window.parent.postMessage({ type, ...data }, "*"); }
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        async function waitUntil(conditionFn, retries, timeout, errorMessage = "Wait operation timed out.") {
+            return new Promise(async (resolve, reject) => {
+                while (!conditionFn()) {
+                    if (retries-- <= 0) return reject(new Error(errorMessage));
+                    await sleep(timeout);
+                }
+                await sleep(100);
+                resolve(true);
+            });
+        }
+        
+        async function forceMenuChoice(choiceText) {
+            const choiceWithTags = cache.menu_choices.find(c => c && typeof c[0] === 'string' && c[0].replace(/(<.+?>)|(&#.+?;)/g, "").trim().includes(choiceText));
+            if (!choiceWithTags) { throw new Error(`Could not find choice containing "${choiceText}"`); }
+            postCommand("forceMenuChoice", { choice: choiceWithTags[0], mod: 0 });
+            if (choiceText === ACTIONS.PUT_ALL) { await sleep(200); return; }
+        }
+
+        async function forceMenuChoiceWithMod(choiceText, mod) {
+            const choiceWithTags = cache.menu_choices.find(c => c && typeof c[0] === 'string' && c[0].replace(/(<.+?>)|(&#.+?;)/g, "").trim().includes(choiceText));
+            if (!choiceWithTags) { throw new Error(`Could not find choice containing "${choiceText}"`); }
+            postCommand("forceMenuChoice", { choice: choiceWithTags[0], mod: mod });
+        }
+
+        async function forceSubmitValue(value) {
+            postCommand("forceSubmitValue", { value: String(value) });
+        }
+
+        function getStorageContent(storageKey) {
+            const content = cache[storageKey];
+            if (!content || content === "{}") return {};
+            try {
+                return typeof content === 'string' ? JSON.parse(content) : content;
+            } catch (e) {
+                return {};
+            }
+        }
+        
+        function getLogAmount(storageKey) { return (getStorageContent(storageKey).tcargologs?.amount) || 0; }
+        function getPlankAmount(storageKey) { return (getStorageContent(storageKey).refined_planks?.amount) || 0; }
+        function getSawdustAmount(storageKey) { return (getStorageContent(storageKey).tcargodust?.amount) || 0; }
+        
+        async function handleInventoryFull() {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            if (fillStep === 'trailer' && cache.cab === CONFIG.MK15_MODEL) {
+                fillStep = 'cab';
+                postCommand("forceMenuBack");
+                await sleep(200);
+                postCommand("sendCommand", { command: "rm_cabtrunk" });
+                await sleep(300);
+            } else {
+                fillStep = 'inventory';
+                postCommand("sendCommand", { command: "vrp-reopen" });
+                await sleep(500);
+            }
+            
+            isProcessing = false;
+        }
+
+        async function handleLoggingCamp() {
+            if (isProcessing || Date.now() - lastActionTimestamp < CONFIG.DEBOUNCE_DELAY_MS) return;
+            isProcessing = true;
+
+            try {
+                const userId = cache.user_id;
+                const inventoryLogAmount = getLogAmount('inventory');
+                
+                if (fillStep === 'inventory') {
+                    if (inventoryLogAmount < CONFIG.INVENTORY_LOG_CAPACITY) {
+                        await forceMenuChoice(ACTIONS.COLLECT_LOGS_5);
+                    }
+                } else if (fillStep === 'cab') {
+                    const mk15StorageKey = `chest_u${userId}veh_cab_${CONFIG.MK15_MODEL}`;
+                    const currentCabLogs = getLogAmount(mk15StorageKey);
+                    
+                    if (currentCabLogs < CONFIG.VEHICLE_LOG_CAPACITY) {
+                        await forceMenuChoice(ACTIONS.COLLECT_LOGS_10);
+                        await sleep(500);
+                        postCommand("sendCommand", { command: "rm_cabtrunk" });
+                    }
+                } else {
+                    const vehicleStorageKey = `chest_u${userId}veh_trailer_${CONFIG.MAIN_TRAILER_MODEL}`;
+                    const currentTrailerLogs = getLogAmount(vehicleStorageKey);
+                    
+                    if (currentTrailerLogs < CONFIG.VEHICLE_LOG_CAPACITY) {
+                        await forceMenuChoice(ACTIONS.COLLECT_LOGS_10);
+                        await sleep(500);
+                        postCommand("sendCommand", { command: "rm_trunk" });
+                    }
+                }
+            } finally {
+                isProcessing = false;
+                lastActionTimestamp = Date.now();
+            }
+        }
+
+        async function handleSawmillLogs() {
+            if (isProcessing || Date.now() - lastActionTimestamp < CONFIG.DEBOUNCE_DELAY_MS) return;
+            isProcessing = true;
+
+            try {
+                const userId = cache.user_id;
+                if (!userId) return;
+
+                const hasMk15 = cache.cab === CONFIG.MK15_MODEL;
+                const vehicleStorageKey = `chest_u${userId}veh_trailer_${CONFIG.MAIN_TRAILER_MODEL}`;
+                const mk15StorageKey = `chest_u${userId}veh_cab_${CONFIG.MK15_MODEL}`;
+
+                const vehicleLogAmount = getLogAmount(vehicleStorageKey);
+                const mk15LogAmount = hasMk15 ? getLogAmount(mk15StorageKey) : 0;
+                let inventoryLogAmount = getLogAmount('inventory');
+
+                if (vehicleLogAmount > 0) {
+                    await forceMenuChoice(ACTIONS.DUMP_FROM_TRUNK);
+                    await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.MOC_TRAILER)), 100, 10);
+                    await forceMenuChoice(ACTIONS.MOC_TRAILER);
+                    await waitUntil(() => cache.menu === CONFIG.SAWMILL_MENU, 100, 10, "Sawmill menu did not reappear after trailer dump.");
+                }
+
+                if (hasMk15 && getLogAmount(mk15StorageKey) > 0) {
+                    await forceMenuChoice(ACTIONS.DUMP_FROM_TRUNK);
+                    await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.DUMP_MK15)), 100, 10);
+                    await forceMenuChoice(ACTIONS.DUMP_MK15);
+                     await waitUntil(() => cache.menu === CONFIG.SAWMILL_MENU, 100, 10, "Sawmill menu did not reappear after MK15 dump.");
+                }
+                
+                inventoryLogAmount = getLogAmount('inventory');
+                if (inventoryLogAmount > 0) {
+                    await forceMenuChoice(ACTIONS.OPEN_STORAGE);
+                    await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.PUT_ALL)), 100, 10);
+                    await forceMenuChoice(ACTIONS.PUT_ALL);
+                }
+            } finally {
+                isProcessing = false;
+                lastActionTimestamp = Date.now();
+                fillStep = 'trailer';
+            }
+        }
+
+        async function takePlanks(target, vehicleName, amount) {
+            console.log(`[TY Auto] Taking max planks to ${target || vehicleName}`);
+            
+            if (target === 'inventory') {
+                await forceMenuChoice(ACTIONS.OPEN_STORAGE);
+                await forceMenuChoice(ACTIONS.TAKE);
+                await forceMenuChoice(ACTIONS.PLANKS);
+                postCommand("forceSubmitValue", { value: String(amount) });
+            } else {
+                await forceMenuChoice(ACTIONS.TAKE_TO_TRUNK);
+                await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(vehicleName)), 50, 20, `Vehicle menu did not appear for ${vehicleName}`);
+                await forceMenuChoice(vehicleName);
+                await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.PLANKS)), 50, 20, "Planks option did not appear");
+                await forceMenuChoiceWithMod(ACTIONS.PLANKS, -1);
+                await sleep(500);
+            }
+        }
+
+        async function handleTyAutoTakePlanks() {
+            if (isProcessing || isTyAutoWaitingForMk15) {
+                console.log("[TY Auto] Skipping - already processing or waiting for MK15");
+                return;
+            }
+            
+            if (Date.now() - lastActionTimestamp < 500) {
+                console.log("[TY Auto] Skipping - debounce active");
+                return;
+            }
+            
+            const userId = cache.user_id;
+            const factionId = cache.faction_id;
+            if (!userId || !factionId) {
+                console.log("[TY Auto] Missing user_id or faction_id");
+                return;
+            }
+            
+            const storageKey = `chest_self_storage:${userId}:faq_${factionId}:chest`;
+            const storageContent = getStorageContent(storageKey);
+            const availablePlanks = storageContent.refined_planks?.amount || 0;
+            
+            if (availablePlanks === 0) {
+                console.log("[TY Auto] No planks available in storage");
+                return;
+            }
+            
+            const hasMk15 = cache.cab === CONFIG.MK15_MODEL;
+            const trailerStorageKey = `chest_u${userId}veh_trailer_${CONFIG.MAIN_TRAILER_MODEL}`;
+            const mk15StorageKey = `chest_u${userId}veh_cab_${CONFIG.MK15_MODEL}`;
+            
+            const currentTrailerPlanks = getPlankAmount(trailerStorageKey);
+            const currentMk15Planks = hasMk15 ? getPlankAmount(mk15StorageKey) : 0;
+            
+            const trailerCapacity = 690;
+            const mk15Capacity = 460;
+            
+            const trailerFull = currentTrailerPlanks >= trailerCapacity;
+            const mk15Full = hasMk15 && currentMk15Planks >= mk15Capacity;
+            
+            console.log(`[TY Auto] Trunk status - Trailer: ${currentTrailerPlanks}/${trailerCapacity}, MK15: ${currentMk15Planks}/${mk15Capacity}`);
+            
+            if (trailerFull && (mk15Full || !hasMk15)) {
+                console.log("[TY Auto] All available trunks are full");
+                
+                const now = Date.now();
+                if (now - lastTrunkFullNotification > 10000) {
+                    lastTrunkFullNotification = now;
+                    if (hasMk15) {
+                        postCommand("notification", { text: "~o~[TY Auto]~w~ Both MK14 trailer (690) and MK15 cab (460) are full! Take them to a TY." });
+                    } else {
+                        postCommand("notification", { text: "~o~[TY Auto]~w~ MK14 trailer is full (690 planks)! Take it to a TY." });
+                    }
+                }
+                return;
+            }
+            
+            console.log(`[TY Auto] Starting with ${availablePlanks} planks available`);
+            isProcessing = true;
+            try {
+                if (!trailerFull) {
+                    const planksNeededForTrailer = trailerCapacity - currentTrailerPlanks;
+                    console.log(`[TY Auto] Loading trailer... (needs ${planksNeededForTrailer} more planks)`);
+                    await takePlanks('trailer', ACTIONS.MOC_TRAILER, planksNeededForTrailer);
+                    
+                    console.log("[TY Auto] Waiting for menu to stabilize after trailer loading...");
+                    await sleep(1000);
+                    
+                    if (cache.menu !== CONFIG.SAWMILL_MENU) {
+                        console.log(`[TY Auto] Not in Sawmill menu (currently: ${cache.menu}), attempting to return...`);
+                        if (cache.menu && cache.menu !== CONFIG.SAWMILL_MENU) {
+                            postCommand("forceMenuBack");
+                            await sleep(500);
+                        }
+                    }
+                } else {
+                    console.log("[TY Auto] Trailer already full, skipping trailer loading");
+                }
+
+                if (hasMk15 && !mk15Full) {
+                    isTyAutoWaitingForMk15 = true;
+                    console.log("[TY Auto] MK15 detected - waiting for cab trunk to be opened...");
+                    postCommand("notification", { text: "~o~[TY Auto]~w~ MK15 detected - open cab trunk within 5 seconds..." });
+                    
+                    try {
+                        await waitUntil(() => 
+                            cache.menu === CONFIG.SAWMILL_MENU && 
+                            cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.TAKE_TO_TRUNK)),
+                            100, 50, "Take to Trunk option not detected within 5 seconds"
+                        );
+                        
+                        const storageContentCheck = getStorageContent(storageKey);
+                        const remainingPlanks = storageContentCheck.refined_planks?.amount || 0;
+                        
+                        if (remainingPlanks > 0) {
+                            const planksNeededForMk15 = mk15Capacity - currentMk15Planks;
+                            const planksToLoad = Math.min(remainingPlanks, planksNeededForMk15);
+                            console.log(`[TY Auto] MK15 cab trunk opened! Loading ${planksToLoad} planks to MK15... (needs ${planksNeededForMk15} more)`);
+                            postCommand("notification", { text: `~g~[TY Auto]~w~ Loading MK15 cab (${planksToLoad} planks)` });
+                            await takePlanks('cab', ACTIONS.DUMP_MK15, planksToLoad);
+                            
+                            console.log("[TY Auto] Waiting for menu to stabilize after MK15 loading...");
+                            await sleep(1000);
+                            
+                            if (cache.menu !== CONFIG.SAWMILL_MENU) {
+                                console.log(`[TY Auto] Not in Sawmill menu after MK15 (currently: ${cache.menu}), attempting to return...`);
+                                if (cache.menu && cache.menu !== CONFIG.SAWMILL_MENU) {
+                                    postCommand("forceMenuBack");
+                                    await sleep(500);
+                                }
+                            }
+                            
+                            postCommand("notification", { text: "~g~[TY Auto]~w~ MK15 cab loaded successfully!" });
+                        } else {
+                            console.log("[TY Auto] Cab trunk opened but no planks remaining");
+                            postCommand("notification", { text: "~o~[TY Auto]~w~ MK15 ready but no planks remaining" });
+                        }
+                    } catch (error) {
+                        console.log(`[TY Auto] MK15 timeout: ${error.message}`);
+                        postCommand("notification", { text: "~o~[TY Auto]~w~ MK15 skipped - cab trunk not opened in time" });
+                    } finally {
+                        isTyAutoWaitingForMk15 = false;
+                    }
+                } else if (hasMk15 && mk15Full) {
+                    console.log("[TY Auto] MK15 cab already full, skipping MK15 loading");
+                    postCommand("notification", { text: "~o~[TY Auto]~w~ MK15 cab already full (460 planks)" });
+                }
+                
+                const newTrailerPlanks = getPlankAmount(trailerStorageKey);
+                const newMk15Planks = hasMk15 ? getPlankAmount(mk15StorageKey) : 0;
+                const totalLoaded = (newTrailerPlanks - currentTrailerPlanks) + (newMk15Planks - currentMk15Planks);
+                
+                if (totalLoaded === 0) {
+                    console.log("[TY Auto] No planks were loaded - vehicles already full");
+                    postCommand("notification", { text: "~o~[TY Auto]~w~ No loading needed - vehicles already have max planks!" });
+                    return;
+                }
+                
+                console.log(`[TY Auto] Successfully loaded ${totalLoaded} planks total`);
+                console.log("[TY Auto] Completing TY Auto process - waiting 5 seconds for user to reopen storage");
+                postCommand("notification", { text: "~g~[TY Auto]~w~ Vehicles loaded! Reopen storage within 5 seconds to continue..." });
+                
+                try {
+                    await waitUntil(() => 
+                        cache.menu === CONFIG.SAWMILL_MENU && 
+                        cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.OPEN_STORAGE)),
+                        100, 50, "Storage menu not reopened within 5 seconds"
+                    );
+                    
+                    const storageContentFinal = getStorageContent(storageKey);
+                    const finalRemainingPlanks = storageContentFinal.refined_planks?.amount || 0;
+                    
+                    if (finalRemainingPlanks > 0) {
+                        console.log(`[TY Auto] Storage reopened! ${finalRemainingPlanks} planks still available for manual loading`);
+                        postCommand("notification", { text: `~b~[TY Auto]~w~ Storage reopened - ${finalRemainingPlanks} planks remaining for manual loading` });
+                    } else {
+                        postCommand("notification", { text: "~g~[TY Auto]~w~ All planks loaded successfully!" });
+                    }
+                } catch (error) {
+                    console.log("[TY Auto] 5-second storage reopen timeout - TY Auto complete");
+                    postCommand("notification", { text: "~y~[TY Auto]~w~ Complete! Reopen storage manually if needed." });
+                }
+
+            } catch (error) {
+                console.error("[TY Auto] Error:", error);
+                postCommand("notification", { text: `~r~[TY Auto]~w~ Error: ${error.message}` });
+            } finally {
+                isProcessing = false;
+                isTyAutoWaitingForMk15 = false;
+                lastActionTimestamp = Date.now() + 2000;
+            }
+        }
+
+        async function handleTyAutoDumpPlanks() {
+             if (isProcessing || Date.now() - lastActionTimestamp < CONFIG.DEBOUNCE_DELAY_MS) return;
+            isProcessing = true;
+            try {
+                 const userId = cache.user_id;
+                 if (!userId) return;
+
+                const hasMk15 = cache.cab === CONFIG.MK15_MODEL;
+                const trailerPlanks = getPlankAmount(`chest_u${userId}veh_trailer_${CONFIG.MAIN_TRAILER_MODEL}`);
+                const mk15Planks = hasMk15 ? getPlankAmount(`chest_u${userId}veh_cab_${CONFIG.MK15_MODEL}`) : 0;
+                let inventoryPlanks = getPlankAmount('inventory');
+
+                if (trailerPlanks > 0) {
+                    await forceMenuChoice(ACTIONS.DUMP_FROM_TRUNK);
+                    await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.MOC_TRAILER)), 100, 10);
+                    await forceMenuChoice(ACTIONS.MOC_TRAILER);
+                    await waitUntil(() => cache.menu === CONFIG.TRAIN_NETWORK_MENU, 100, 10);
+                }
+                if (hasMk15 && getPlankAmount(`chest_u${userId}veh_cab_${CONFIG.MK15_MODEL}`) > 0) {
+                    await forceMenuChoice(ACTIONS.DUMP_FROM_TRUNK);
+                    await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.DUMP_MK15)), 100, 10);
+                    await forceMenuChoice(ACTIONS.DUMP_MK15);
+                     await waitUntil(() => cache.menu === CONFIG.TRAIN_NETWORK_MENU, 100, 10);
+                }
+                inventoryPlanks = getPlankAmount('inventory');
+                if (inventoryPlanks > 0) {
+                    await forceMenuChoice(ACTIONS.OPEN_STORAGE);
+                    await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.PUT_ALL)), 100, 10);
+                    await forceMenuChoice(ACTIONS.PUT_ALL);
+                }
+            } finally {
+                isProcessing = false;
+                lastActionTimestamp = Date.now();
+            }
+        }
+
+        async function handleStorageMenu() {
+            if (isProcessing || Date.now() - lastActionTimestamp < CONFIG.DEBOUNCE_DELAY_MS) return;
+            
+            isProcessing = true;
+            try {
+                const userId = cache.user_id;
+                if (!userId) return;
+
+                const hasMk15 = cache.cab === CONFIG.MK15_MODEL;
+                const vehicleStorageKey = `chest_u${userId}veh_trailer_${CONFIG.MAIN_TRAILER_MODEL}`;
+                const mk15StorageKey = `chest_u${userId}veh_cab_${CONFIG.MK15_MODEL}`;
+                
+                const vehicleLogAmount = getLogAmount(vehicleStorageKey);
+                const mk15LogAmount = hasMk15 ? getLogAmount(mk15StorageKey) : 0;
+                const inventoryLogAmount = getLogAmount('inventory');
+                
+                const totalLogsToAdd = vehicleLogAmount + mk15LogAmount + inventoryLogAmount;
+
+                if (totalLogsToAdd > 0) {
+                    if (vehicleLogAmount > 0) {
+                        await forceMenuChoice(ACTIONS.DUMP_FROM_TRUNK);
+                        await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.MOC_TRAILER)), 100, 10);
+                        await forceMenuChoice(ACTIONS.MOC_TRAILER);
+                        await waitUntil(() => cache.menu === CONFIG.SAWMILL_MENU, 100, 10);
+                    }
+
+                    if (hasMk15 && mk15LogAmount > 0) {
+                        await forceMenuChoice(ACTIONS.DUMP_FROM_TRUNK);
+                        await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.DUMP_MK15)), 100, 10);
+                        await forceMenuChoice(ACTIONS.DUMP_MK15);
+                        await waitUntil(() => cache.menu === CONFIG.SAWMILL_MENU, 100, 10);
+                    }
+                    
+                    if (inventoryLogAmount > 0) {
+                        await forceMenuChoice(ACTIONS.OPEN_STORAGE);
+                        await waitUntil(() => cache.menu_choices.some(c => c && c[0] && c[0].includes(ACTIONS.PUT_ALL)), 100, 10);
+                        await forceMenuChoice(ACTIONS.PUT_ALL);
+                    }
+                }
+            } finally {
+                isProcessing = false;
+                lastActionTimestamp = Date.now();
+            }
+        }
+
+        async function handlePlankProduction() {
+            if (isProcessing || Date.now() - lastActionTimestamp < CONFIG.DEBOUNCE_DELAY_MS) return;
+            if (!isPlankAutoEnabled) return;
+            
+            console.log(`Starting plank production handler`);
+            isProcessing = true;
+            try {
+                const userId = cache.user_id;
+                if (!userId) return;
+
+                const factionId = cache.faction_id;
+                const storageKey = `chest_self_storage:${userId}:faq_${factionId}:chest`;
+                const storageContent = getStorageContent(storageKey);
+                
+                const availableLogs = storageContent.tcargologs?.amount || 0;
+                
+                console.log(`Available: ${availableLogs} logs`);
+                
+                const maxBatches = Math.floor(availableLogs / CONFIG.LOGS_PER_PLANK_BATCH);
+                
+                console.log(`Can make ${maxBatches} batches`);
+                
+                if (maxBatches > 0) {
+                    console.log(`Clicking Mill Planks`);
+                    await forceMenuChoice(ACTIONS.MILL_PLANKS);
+                    await waitUntil(() => cache.menu === CONFIG.MILL_PLANKS_MENU, 100, 10);
+                    
+                    postCommand("notification", { text: `~g~Mill Planks menu opened! Open storage to continue automation.` });
+                } else {
+                    postCommand("notification", { text: `~r~Not enough logs for planks! Need ${CONFIG.LOGS_PER_PLANK_BATCH} logs.` });
+                }
+            } catch (error) {
+                console.error(`Plank production error:`, error);
+                postCommand("notification", { text: `~r~[Plank Auto]~w~ Error: ${error.message}` });
+            } finally {
+                isProcessing = false;
+                lastActionTimestamp = Date.now();
+            }
+        }
+
+        function updateGoalDisplay() {
+            const userId = cache.user_id;
+            const factionId = cache.faction_id;
+            let currentPlanksInStorage = 0;
+            let currentLogsInStorage = 0;
+            let currentPlanksInTy = 0;
+            
+            if (userId && factionId) {
+                const storageKey = `chest_self_storage:${userId}:faq_${factionId}:chest`;
+                const storageContent = getStorageContent(storageKey);
+                currentPlanksInStorage = storageContent.refined_planks?.amount || 0;
+                currentLogsInStorage = storageContent.tcargologs?.amount || 0;
+            }
+            
+            if (userId) {
+                const tyStorageKey = `chest_self_storage:${userId}:biz_train:chest`;
+                const tyStorageContent = getStorageContent(tyStorageKey);
+                currentPlanksInTy = tyStorageContent.refined_planks?.amount || 0;
+            }
+            
+            const totalPlanks = totalPlanksProduced + currentPlanksInStorage + currentPlanksInTy;
+            const planksStillNeeded = Math.max(0, plankGoal - totalPlanks);
+            
+            const goalProgressEl = document.getElementById('goal-progress');
+            if (goalProgressEl) {
+                goalProgressEl.textContent = `${totalPlanks}/${plankGoal}`;
+                goalProgressEl.style.color = (plankGoal > 0 && totalPlanks >= plankGoal) ? '#4ade80' : '#03dac6';
+            }
+            
+            const logsNeededEl = document.getElementById('logs-needed');
+            if (logsNeededEl) {
+                const totalLogsNeeded = planksStillNeeded * CONFIG.LOGS_PER_PLANK;
+                const logsStillNeeded = Math.max(0, totalLogsNeeded - currentLogsInStorage);
+                logsNeededEl.textContent = `(${logsStillNeeded} logs needed)`;
+            }
+            
+            const totalLogsNeeded = planksStillNeeded * CONFIG.LOGS_PER_PLANK;
+            const canCraftRemainingPlanks = currentLogsInStorage >= totalLogsNeeded;
+            const goalCanBeAchieved = totalPlanks >= plankGoal || (planksStillNeeded > 0 && canCraftRemainingPlanks);
+            
+            if (plankGoal > 0 && goalCanBeAchieved && !goalMet) {
+                goalMet = true;
+                localStorage.setItem('sawmillGoalMet', 'true');
+                
+                if (totalPlanks >= plankGoal) {
+                    let breakdown = `${totalPlanksProduced} produced`;
+                    if (currentPlanksInStorage > 0) breakdown += ` + ${currentPlanksInStorage} in storage`;
+                    if (currentPlanksInTy > 0) breakdown += ` + ${currentPlanksInTy} in TY`;
+                    postCommand("oneliner", { text: `🎉 Plank Goal Achieved! ${totalPlanks}/${plankGoal} planks (${breakdown})!` });
+                } else {
+                    const planksFromLogs = Math.floor(currentLogsInStorage / CONFIG.LOGS_PER_PLANK);
+                    postCommand("oneliner", { text: `🎉 Plank Goal Achievable! ${totalPlanks} planks + ${planksFromLogs} craftable = ${totalPlanks + planksFromLogs}/${plankGoal} (${currentLogsInStorage} logs available)!` });
+                }
+            }
+            
+            if(fillStep !== 'trailer') fillStep = 'trailer';
+        }
+
+        function updateStorageDisplay() {
+            const userId = cache.user_id;
+            const factionId = cache.faction_id;
+
+            if (!userId || !factionId) { 
+                itemListContainer.innerHTML = '<div class="storage-item"><span class="storage-item-name">Waiting for User/Faction ID...</span></div>';
+            } else {
+                const storageKey = `chest_self_storage:${userId}:faq_${factionId}:chest`;
+                const storageContent = getStorageContent(storageKey);
+                const tyStorageKey = `chest_self_storage:${userId}:biz_train:chest`;
+                const tyStorageContent = getStorageContent(tyStorageKey);
+                itemListContainer.innerHTML = '';
+                
+                if (Object.keys(storageContent).length > 0 || Object.keys(tyStorageContent).length > 0) {
+                    let othersAmount = 0;
+                    let displayedItems = 0;
+                    
+                    for (const key in itemMap) {
+                        if (storageContent[key]) {
+                            const div = document.createElement('div');
+                            div.className = 'storage-item';
+                            div.innerHTML = `<span class="storage-item-name">${itemMap[key]}</span><span class="storage-item-amount">${storageContent[key].amount.toLocaleString()}</span>`;
+                            itemListContainer.appendChild(div);
+                            displayedItems++;
+                        }
+                    }
+                    
+                    if (tyStorageContent.refined_planks?.amount > 0) {
+                        const div = document.createElement('div');
+                        div.className = 'storage-item';
+                        div.innerHTML = `<span class="storage-item-name"><i class="bi bi-train-front me-1"></i>TY Planks</span><span class="storage-item-amount">${tyStorageContent.refined_planks.amount.toLocaleString()}</span>`;
+                        itemListContainer.appendChild(div);
+                        displayedItems++;
+                    }
+                    
+                    const availableLogs = storageContent.tcargologs?.amount || 0;
+                    const maxBatches = Math.floor(availableLogs / CONFIG.LOGS_PER_PLANK_BATCH);
+                    const totalCraftablePlanks = maxBatches * CONFIG.PLANKS_PER_BATCH;
+                    
+                    if (totalCraftablePlanks > 0) {
+                        const div = document.createElement('div');
+                        div.className = 'storage-item craft-potential';
+                        div.innerHTML = `<span class="storage-item-name"><i class="bi bi-lightning-charge me-1"></i>Can craft</span><span class="storage-item-amount">${totalCraftablePlanks.toLocaleString()} planks</span>`;
+                        itemListContainer.appendChild(div);
+                        displayedItems++;
+                    }
+                    
+                    for (const key in storageContent) {
+                        if (!itemMap[key]) { othersAmount += storageContent[key].amount; }
+                    }
+                    if (othersAmount > 0) {
+                        const div = document.createElement('div');
+                        div.className = 'storage-item';
+                        div.innerHTML = `<span class="storage-item-name">Others</span><span class="storage-item-amount">${othersAmount.toLocaleString()}</span>`;
+                        itemListContainer.appendChild(div);
+                    }
+                    
+                    if (displayedItems === 0 && othersAmount === 0) {
+                        itemListContainer.innerHTML = '<div class="storage-item"><span class="storage-item-name">Self-Storage is empty</span></div>';
+                    }
+                } else {
+                    itemListContainer.innerHTML = '<div class="storage-item"><span class="storage-item-name">Open Self-Storage to see items</span></div>';
+                }
+            }
+
+            const inventoryContent = getStorageContent('inventory');
+            const storageCardAmount = inventoryContent.storage_card?.amount;
+            if(storageCardAmount) {
+                inventoryListContainer.innerHTML = `<div class="storage-item"><span class="storage-item-name">Storage Cards</span><span class="storage-item-amount">${storageCardAmount.toLocaleString()}</span></div>`;
+            } else {
+                inventoryListContainer.innerHTML = '<div class="storage-item"><span class="storage-item-name">No Storage Cards</span></div>';
+            }
+        }
+
+        function updateUI() {
+            updateGoalDisplay();
+            updateStorageDisplay();
+        }
+
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            const messageEl = document.getElementById('confirm-message');
+            const cancelBtn = document.getElementById('confirm-cancel');
+            const proceedBtn = document.getElementById('confirm-proceed');
+
+            messageEl.textContent = message;
+            modal.classList.add('show');
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            const newProceedBtn = proceedBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+            proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
+
+            newCancelBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+            });
+
+            newProceedBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+                onConfirm();
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    modal.classList.remove('show');
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        window.addEventListener("message", (event) => {
+            const data = event.data;
+            if (!data || !data.data) return;
+            
+            const receivedData = data.data;
+            
+            for (const [key, value] of Object.entries(receivedData)) {
+                if (key === 'menu_choices') {
+                    if (typeof value === 'string') {
+                        try { cache[key] = JSON.parse(value || "[]"); } catch { cache[key] = []; }
+                    } else if (Array.isArray(value)) { cache[key] = value; } else { cache[key] = []; }
+                } else { cache[key] = value; }
+            }
+            
+            if (receivedData.notification === NOTIFICATIONS.INVENTORY_FULL) { handleInventoryFull(); }
+            
+            updateUI();
+            
+            if (cache.menu_open && Array.isArray(cache.menu_choices)) {
+                const menuText = cache.menu_choices.map(c => c && c[0] ? c[0].replace(/(<.+?>)|(&#.+?;)/g, "").trim() : "").join(" ");
+                
+                console.log(`Auto states - Plank: ${isPlankAutoEnabled}, TY: ${isTyAutoEnabled}, Logs: ${isLogsAutoEnabled}`);
+                
+                if (isTyAutoEnabled && cache.menu === CONFIG.SAWMILL_MENU && menuText.includes("Take to Trunk")) {
+                    console.log(`[TY Auto] Menu choices available: ${menuText}`);
+                    console.log("[TY Auto] Sawmill menu detected, attempting to take planks");
+                    handleTyAutoTakePlanks();
+                } else if (isPlankAutoEnabled && cache.menu === CONFIG.SAWMILL_MENU && menuText.includes("Open Storage") && !plankAutoStorageOpened) {
+                    console.log(`Auto-opening storage for plank automation`);
+                    if (!isProcessing) {
+                        isProcessing = true;
+                        plankAutoStorageOpened = true;
+                        forceMenuChoice(ACTIONS.OPEN_STORAGE).finally(() => {
+                            isProcessing = false;
+                        });
+                    }
+                } else if (cache.menu === CONFIG.SAWMILL_MENU && menuText.includes("Dump from Trunk") && !isPlankAutoEnabled) {
+                    handleStorageMenu();
+                } else if (isLogsAutoEnabled && menuText.includes("Collect Logs")) {
+                    handleLoggingCamp();
+                } else if (isLogsAutoEnabled && cache.menu === CONFIG.SAWMILL_MENU) {
+                     handleSawmillLogs();
+                } else if (isTyAutoEnabled && cache.menu === CONFIG.TRAIN_NETWORK_MENU) {
+                    handleTyAutoDumpPlanks();
+                } else if (isPlankAutoEnabled && cache.menu === CONFIG.TRUCKING_SAWMILL_MENU && menuText.includes("Mill Planks")) {
+                    console.log(`Triggering plank production for menu: ${cache.menu}`);
+                    plankAutoStorageOpened = false;
+                    handlePlankProduction();
+                } else if (isPlankAutoEnabled && cache.menu === CONFIG.MILL_PLANKS_MENU && menuText.includes("Mill Planks x5")) {
+                    console.log(`Auto-selecting Mill Planks x5`);
+                    if (!isProcessing) {
+                        isProcessing = true;
+                        forceMenuChoice(ACTIONS.MILL_PLANKS_X5).finally(() => {
+                            isProcessing = false;
+                            plankAutoStorageOpened = false;
+                        });
+                    }
+                }
+            }
+        });
+
+        function initializeFiveMSupport() {
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            document.addEventListener('selectstart', (e) => {
+                if (isResizing || draggableWindow.classList.contains('dragging')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            document.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            initializeFiveMSupport();
+            loadWindowTransform();
+
+            const savedLogsState = localStorage.getItem('sawmillLogsAutoEnabled');
+            isLogsAutoEnabled = savedLogsState === null ? true : savedLogsState === 'true';
+            logsAutoToggle.checked = isLogsAutoEnabled;
+
+            const savedTyState = localStorage.getItem('sawmillTyAutoEnabled');
+            isTyAutoEnabled = savedTyState === 'true';
+            tyAutoToggle.checked = isTyAutoEnabled;
+            
+            const savedPlankState = localStorage.getItem('sawmillPlankAutoEnabled');
+            isPlankAutoEnabled = savedPlankState === 'true';
+            plankAutoToggle.checked = isPlankAutoEnabled;
+            
+            plankGoal = parseInt(localStorage.getItem('sawmillPlankGoal')) || 0;
+            goalInput.value = formatGoalDisplay(plankGoal);
+            const logsNeeded = plankGoal * CONFIG.LOGS_PER_PLANK;
+            document.getElementById('logs-needed').textContent = `(${logsNeeded} logs needed)`;
+            
+            totalPlanksProduced = parseInt(localStorage.getItem('sawmillTotalPlanksProduced')) || 0;
+            goalMet = localStorage.getItem('sawmillGoalMet') === 'true';
+
+            postCommand("getData");
+            updateUI();
+            
+            const savedControlsState = localStorage.getItem('sawmillControlsCollapsed');
+            if (savedControlsState === 'true') {
+                document.querySelector('.controls-section').classList.add('collapsed');
+            }
+
+            const escapeListener = (e) => {
+                if (e.key === "Escape") {
+                    postCommand("pin");
+                }
+            };
+            window.addEventListener('keydown', escapeListener);
+        });
+    })();
+    </script>
+</body>
+</html>

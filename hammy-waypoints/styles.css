@@ -1,0 +1,360 @@
+:root {
+  --bg: #1a1a1a;
+  --bg-light: #2a2a2a;
+  --panel: #2a2a2a;
+  --border: #404040;
+  --text: #f0f0f0;
+  --text-dim: #b0b0b0;
+  --accent: #4a9eff;
+  --success: #4ade80;
+  --danger: #f87171;
+  --warning: #fbbf24;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: transparent;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.waypoint-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 280px;
+  max-width: calc(100vw - 40px);
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 2147483647;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toggle-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 2147483646;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-btn:hover {
+  background: var(--bg-light);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.toggle-btn.hidden {
+  display: none !important;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+#greeting {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.coord-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.coord-status {
+  font-size: 12px;
+  color: var(--text-dim);
+  flex: 1;
+}
+
+.refresh-btn {
+  background: var(--border);
+  border: none;
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.coord-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  transition: border-color 0.2s;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.coord-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.coord-input::placeholder {
+  color: var(--text-dim);
+}
+
+.action-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.label-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: border-color 0.2s;
+}
+
+.label-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.label-input::placeholder {
+  color: var(--text-dim);
+}
+
+.save-btn {
+  background: var(--success);
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+}
+
+.save-btn:hover {
+  background: #22c55e;
+  transform: translateY(-1px);
+}
+
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sort-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.sort-select {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.waypoint-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 999999;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.waypoint-select {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.waypoint-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.waypoint-select option {
+  background: var(--bg);
+  color: var(--text);
+  padding: 4px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.load-btn {
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+}
+
+.load-btn:hover {
+  background: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background: var(--danger);
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+}
+
+.delete-btn:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
+}
+
+.status-message {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  min-height: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+@media (max-width: 400px) {
+  .waypoint-panel {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    top: 10px;
+  }
+  
+  .input-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .waypoint-row {
+    flex-direction: column;
+  }
+  
+  .action-row {
+    flex-direction: column;
+  }
+}
